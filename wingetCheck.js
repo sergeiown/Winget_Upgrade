@@ -18,7 +18,7 @@ function checkForWinget(logFilePath) {
             fs.appendFileSync(logFilePath, 'Error: winget is not installed on this system.');
             process.exit(1);
         } else {
-            console.log('Winget is installed on the system.');
+            console.log(`Winget is installed on the system.${os.EOL}`);
         }
     });
 }

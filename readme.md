@@ -6,7 +6,7 @@ Winget Upgrader is a Node.js command line tool that automates the process of upd
 
 | Structure: |  |
 | --- | --- |
-| Dependencies | ![image](https://github.com/sergeiown/Winget_Upgrade/assets/112722061/54bd0420-4759-4b75-80cc-ef331cc6e5ac) |
+| Dependencies | ![image](https://github.com/sergeiown/Winget_Upgrade/assets/112722061/fc13354a-5746-4201-a201-c39fced9d78e) |
 
 Winget Upgrader uses Winget commands to update all software installed on your computer. It automatically checks for Winget on your system, performs the software updates, and keeps an event log for easy tracking of the process.
 
@@ -58,6 +58,7 @@ When the program is finished updating, it automatically exits to free up system 
 - `index.js`: The main program file.
 - `wingetCheck.js`: Module for checking the presence of Winget.
 - `executionAndLog.js`: Module for executing commands and logging events.
+- `settings.js`: A module that contains the necessary settings for executing commands and logging events.
 
 ## License
 

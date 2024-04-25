@@ -1,3 +1,6 @@
+/* Copyright (c) 2024 Serhii I. Myshko
+https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
+
 'use strict';
 
 const { exec } = require('child_process');

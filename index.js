@@ -10,7 +10,7 @@ const logFilePath = path.join(documentsPath, 'winget_upgrade.log');
 const maxLogFileSize = 256 * 1024;
 
 const command =
-    'winget upgrade --all --accept-package-agreements --accept-source-agreements --disable-interactivity --silent';
+    'cmd /c winget upgrade --all --accept-package-agreements --accept-source-agreements --disable-interactivity --silent';
 
 checkForWinget(logFilePath);
 

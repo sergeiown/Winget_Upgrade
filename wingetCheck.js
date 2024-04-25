@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 
 function checkForWinget(logFilePath) {
-    const wingetCheckCommand = 'winget --version';
+    const wingetCheckCommand = 'cmd /c winget --version';
 
     exec(wingetCheckCommand, (error) => {
         if (error) {

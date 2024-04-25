@@ -14,4 +14,18 @@ const command =
 
 checkForWinget(logFilePath);
 
-executeAndLog(command, logFilePath, checkAndTrimLogFile.bind(null, logFilePath, maxLogFileSize));
+executeAndLog(command, logFilePath, () => {
+    checkAndTrimLogFile(logFilePath, maxLogFileSize);
+    setTimeout(() => {
+        console.log(
+            '\nUpdate is complete.\n\nProgram will automatically exit after 10 seconds, or press any key to exit immediately.'
+        );
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        process.stdin.on('data', process.exit.bind(process, 0));
+    }, 1000);
+
+    setTimeout(() => {
+        process.exit(0);
+    }, 10000);
+});

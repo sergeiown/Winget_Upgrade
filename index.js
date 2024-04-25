@@ -3,31 +3,20 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-const os = require('os');
-const path = require('path');
 const { checkForWinget } = require('./wingetCheck');
 const { executeAndLog, checkAndTrimLogFile } = require('./executionAndLog');
-
-const documentsPath = path.join(os.homedir(), 'Documents');
-
-const logFilePath = path.join(documentsPath, 'winget_upgrade.log');
-
-const maxLogFileSize = 256 * 1024;
-
-const command =
-    'cmd /c winget upgrade --all --accept-package-agreements --accept-source-agreements --disable-interactivity --silent';
+const { logFilePath, maxLogFileSize, command, finalMessage } = require('./settings');
 
 checkForWinget(logFilePath);
 
 executeAndLog(command, logFilePath, () => {
     checkAndTrimLogFile(logFilePath, maxLogFileSize);
     setTimeout(() => {
-        console.log(
-            '\nUpdate is complete.\n\nProgram will automatically exit after 10 seconds, or press any key to exit immediately.'
-        );
         process.stdin.setRawMode(true);
         process.stdin.resume();
         process.stdin.on('data', process.exit.bind(process, 0));
+
+        console.log(finalMessage);
     }, 1000);
 
     setTimeout(() => {

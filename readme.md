@@ -1,15 +1,20 @@
 # Winget Upgrader
 
+**[EN](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme.md) | [UA](https://github.com/sergeiown/AWinget_Upgrade/blob/main/readme_ua.md)**
+
 Winget Upgrader is a program that automates the process of updating software on your computer using Windows Package Manager (Winget).
 
 Winget Upgrader uses Winget commands to update all software installed on your computer. It automatically checks for Winget on your system, performs the software updates, and keeps an event log for easy tracking of the process.
 
 ```
-Windows Package Manager (Winget) is a package management tool for Windows that allows you to easily install, update and uninstall software directly from the command line. Winget allows you to update installed programs quickly and conveniently, making it a useful tool for keeping your system up to date.
+Windows Package Manager (Winget) is a package management tool for Windows that allows
+you to easily install, update and uninstall software directly from the command line.
+Winget allows you to update installed programs quickly and conveniently, making it
+a useful tool for keeping your system up to date.
 
 ```
 
-## Functionality.
+## Functionality
 
 ### Check for Winget availability
 Before starting the update, the program checks if Winget is installed on the system. If Winget is not installed, the program displays an error and stops working.
@@ -24,7 +29,7 @@ The `winget_upgrade.log` log file is saved in the user's `My Documents` folder.
 ### Limiting the size of the log
 The log is automatically truncated if its size exceeds 256 KB to avoid file overflow.
 
-## System requirements.
+## System requirements
 
 1. Windows OS with Winget support.
 2. Node.js installed on your computer.
@@ -51,6 +56,6 @@ When the program is finished updating, it automatically exits to free up system 
 - `wingetCheck.js`: Module for checking the presence of Winget.
 - `executionAndLog.js`: Module for executing commands and logging events.
 
-## License.
+## License
 
-
+[Copyright (c) 2024 Serhii I. Myshko](https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE)

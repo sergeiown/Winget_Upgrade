@@ -24,7 +24,11 @@ function executeAndLog(command, logFilePath, callback) {
         lines.forEach((line) => {
             const trimmedLine = line.trim();
 
-            if (!/[░▒█]/.test(trimmedLine) && /[a-zA-Zа-яА-Я0-9]/.test(trimmedLine)) {
+            if (
+                !/[░▒█]/.test(trimmedLine) &&
+                /[a-zA-Zа-яА-Я0-9]/.test(trimmedLine) &&
+                !trimmedLine.includes('have version numbers that cannot be determined')
+            ) {
                 logStream.write(trimmedLine + os.EOL);
             }
         });

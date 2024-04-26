@@ -11,6 +11,8 @@ const settings = require('./settings');
 
 function checkForWinget() {
     exec(settings.wingetPath, (error, stdout) => {
+        console.clear();
+
         if (error) {
             console.error('Error: winget is not installed on this system.');
 

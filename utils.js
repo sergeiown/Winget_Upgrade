@@ -8,8 +8,6 @@ const os = require('os');
 const { exec } = require('child_process');
 
 function executeAndLog(command, logFilePath, callback) {
-    console.clear();
-
     const currentDate = new Date().toLocaleString();
 
     fs.appendFileSync(logFilePath, `${os.EOL}>> ${currentDate}${os.EOL}`);

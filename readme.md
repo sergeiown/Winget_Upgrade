@@ -39,6 +39,8 @@ The log is automatically truncated if its size exceeds 256 KB to avoid file over
 
 ## Usage
 
+Use the `winget_upgrade.exe` available for download in the [release](https://github.com/sergeiown/Winget_Upgrade/releases) or use an alternative method:
+
 1. Run the program using the command `node main.js`.
 2. The program will automatically check for Winget in the system.
 3. If Winget is present, it will start updating the entire software.

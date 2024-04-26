@@ -34,6 +34,10 @@ function executeAndLog(command, logFilePath, callback) {
         });
     });
 
+    childProcess.stderr.on('data', (data) => {
+        console.error(`Error: ${data}`);
+    });
+
     childProcess.stderr.pipe(logStream);
 
     childProcess.stdout.pipe(process.stdout);

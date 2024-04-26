@@ -39,7 +39,7 @@ The log is automatically truncated if its size exceeds 256 KB to avoid file over
 
 ## Usage
 
-1. Run the program using the command `node index.js`.
+1. Run the program using the command `node main.js`.
 2. The program will automatically check for Winget in the system.
 3. If Winget is present, it will start updating the entire software.
 4. The upgrade process will be displayed in the console window and written to the `winget_upgrade.log` log file.
@@ -55,9 +55,8 @@ When the program is finished updating, it automatically exits to free up system 
 
 ## Attached files
 
-- `index.js`: The main program file.
-- `wingetCheck.js`: Module for checking the presence of Winget.
-- `executionAndLog.js`: Module for executing commands and logging events.
+- `main.js`: The main program file.
+- `utils.js`: Module for executing commands and logging events.
 - `settings.js`: A module that contains the necessary settings for executing commands and logging events.
 
 ## License

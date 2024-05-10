@@ -44,7 +44,7 @@ Use the `winget_upgrade.exe` available for download in the [release](https://git
 1. Run the program using the command `node main.js`.
 2. The program will automatically check for Winget in the system.
 3. If Winget is present, it will start updating the entire software.
-4. The upgrade process will be displayed in the console window and written to the `winget_upgrade.log` log file.
+4. The upgrade process will be displayed in the console window and written to the `%USERPROFILE%\documents\winget_upgrade.log` log file.
 5. After the update is complete, the program will automatically exit in 10 seconds, or you can exit manually by pressing any key.
 
 ## Error messages

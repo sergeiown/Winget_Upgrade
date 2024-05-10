@@ -27,7 +27,7 @@ Winget Upgrader uses the `winget upgrade --all` command to upgrade all installed
 
 ### Logging
 The program keeps a log of events in the `winget_upgrade.log` file, where it stores information about actions performed, errors and other events related to the upgrade process.
-The `winget_upgrade.log` log file is saved in the user's `My Documents` folder.
+The `winget_upgrade.log` log file is saved in `%USERPROFILE%\documents\` folder.
 
 ### Limiting the size of the log
 The log is automatically truncated if its size exceeds 256 KB to avoid file overflow.

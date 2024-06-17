@@ -4,7 +4,7 @@
 
 Winget Upgrader is a Node.js command line tool that automates the process of updating software on your computer using Windows Package Manager ([Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)).
 
-| Structure and appearance |  |
+|  | Structure and appearance |
 | --- | --- |
 | Dependencies | ![image](https://github.com/sergeiown/Winget_Upgrade/assets/112722061/978c9947-0c51-4930-b8f3-0599bab2ef03) |
 | Console appearance | ![image](https://github.com/sergeiown/Winget_Upgrade/assets/112722061/3620b5fe-daf2-4a8d-8fc9-2fcaf673c25b) |

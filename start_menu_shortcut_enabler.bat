@@ -19,12 +19,12 @@ if exist "%shortcutPath%" (
 )
 
 :: WindowStyle=
-:: 1 Normal window
-:: 2 Hidden window
-:: 3 Maximized window
-:: 4 Normal window (again)
-:: 5 Minimized window
-:: 6 Minimized window with active focus
-:: 7 Minimized window (again)
+:: 1 - Normal window: opens the window in a normal size and position
+:: 2 - Hidden window: window is hidden, process runs in the background
+:: 3 - Maximized window: opens the window maximized (full screen)
+:: 4 - Normal window (same as 1): opens the window in a normal mode
+:: 5 - Minimized window: opens the window minimized (in taskbar)
+:: 6 - Minimized window with active focus: window is minimized, but still active
+:: 7 - Minimized window (same as 5): opens the window minimized
 
 echo The operation is complete. & echo. & pause

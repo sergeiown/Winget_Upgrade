@@ -3,7 +3,6 @@
 
 @echo off
 
-:: Configuration
 set shortcutName=winget_upgrade
 set shortcutTargetDescription=Run checking for updates
 set targetPath=%CD%\winget_upgrade.exe
@@ -11,7 +10,6 @@ set folderPath=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
 set shortcutPath=%folderPath%\%shortcutName%.lnk
 set iconPath=%SystemRoot%\System32\SHELL32.dll,13
 set workingDirectory=%CD%
-set windowTitle=Winget Upgrade
 set windowStyle=1
 
 :: WindowStyle=
@@ -28,9 +26,10 @@ if exist "%shortcutPath%" (
     del "%shortcutPath%"
 ) else (
     echo The shortcut "%shortcutPath%" does not exist. & echo. & echo Creating a shortcut. & echo.
-    powershell -Command "$WScript=New-Object -ComObject WScript.Shell; $Shortcut=$WScript.CreateShortcut('%shortcutPath%'); $Shortcut.TargetPath='%targetPath%'; $Shortcut.IconLocation='%iconPath%'; $Shortcut.WorkingDirectory='%workingDirectory%'; $Shortcut.Description='%shortcutTargetDescription%'; $Shortcut.WindowStyle=%windowStyle%; $Shortcut.WindowTitle='%windowTitle%'; $Shortcut.Save()"
+    powershell -Command "$WScript=New-Object -ComObject WScript.Shell; $Shortcut=$WScript.CreateShortcut('%shortcutPath%'); $Shortcut.TargetPath='%targetPath%'; $Shortcut.IconLocation='%iconPath%'; $Shortcut.WorkingDirectory='%workingDirectory%'; $Shortcut.Description='%shortcutTargetDescription%'; $Shortcut.WindowStyle=%windowStyle%; $Shortcut.Save()"
 )
 
 echo The operation is complete. & echo. & pause
+
 
 

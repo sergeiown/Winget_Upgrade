@@ -37,7 +37,10 @@ Winget Upgrader використовує команду `winget upgrade --all`, 
 ## Вимоги до системи
 
 1. ОС Windows з підтримкою Winget.
-2. Node.js встановлений на вашому комп'ютері.
+
+<a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">
+    <img src="https://github.com/user-attachments/assets/db2b5487-b5bf-45d9-8948-48bb88162f17" alt="windows_compatibility" style="width:20%;"/>
+</a>
 
 ## Використання
 

@@ -36,7 +36,10 @@ The log is automatically truncated if its size exceeds 256 KB to avoid file over
 ## System requirements
 
 1. Windows OS with Winget support.
-2. Node.js installed on your computer.
+
+<a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">
+    <img src="https://github.com/user-attachments/assets/db2b5487-b5bf-45d9-8948-48bb88162f17" alt="windows_compatibility" style="width:20%;"/>
+</a>
 
 ## Usage
 

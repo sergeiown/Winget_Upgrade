@@ -1,4 +1,4 @@
-# Winget Upgrader
+# Winget Upgrade
 
 [EN](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme.md) | **[UA](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme_ua.md)**
 

@@ -51,6 +51,8 @@ Use the `winget_upgrade.exe` available for download in the [release](https://git
 4. The upgrade process will be displayed in the console window and written to the `%USERPROFILE%\documents\winget_upgrade.log` log file.
 5. After the update is complete, the program will automatically exit in 10 seconds, or you can exit manually by pressing any key.
 
+Additionally, you can use `start_menu_shortcut_enabler.bat`, which will add a shortcut `winget_upgrade.exe` to the Windows Start Menu which will automatically launch Winget Upgrade with the system.
+
 ## Error messages
 
 In case of errors, the program displays the corresponding messages in the console and writes them to the log file for further analysis.

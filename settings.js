@@ -9,6 +9,7 @@ const documentsPath = path.join(os.homedir(), 'Documents');
 
 const settings = {
     wingetPath: 'where.exe winget',
+    wingetVersion: 'winget --version',
     logFilePath: path.join(documentsPath, 'winget_upgrade.log'),
     maxLogFileSize: 256 * 1024,
     wingetArgs: [

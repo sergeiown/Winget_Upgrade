@@ -13,6 +13,16 @@ function setConsoleTitle(title) {
     exec(`title ${title}`);
 }
 
+function getWingetVersion(callback) {
+    exec(settings.wingetVersion, (error, stdout) => {
+        if (error) {
+            callback(null);
+        } else {
+            callback(stdout.trim());
+        }
+    });
+}
+
 function checkForWinget() {
     setConsoleTitle('Winget Upgrade');
 
@@ -50,7 +60,10 @@ Possible solutions:
                 process.exit(1);
             });
         } else {
-            console.log(`Winget is installed on the system.${os.EOL}`);
+            getWingetVersion((version) => {
+                console.log(`Winget ${version} is installed on the system.${os.EOL}`);
+            });
+
             const wingetLocation = stdout.trim();
 
             const command = `${wingetLocation} ${settings.wingetArgs.join(' ')}`;

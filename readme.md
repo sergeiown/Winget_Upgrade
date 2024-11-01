@@ -35,11 +35,8 @@ The log is automatically truncated if its size exceeds 256 KB to avoid file over
 
 ## System requirements
 
-1. Windows OS with Winget support.
-
-<a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">
-    <img src="https://github.com/user-attachments/assets/db2b5487-b5bf-45d9-8948-48bb88162f17" alt="windows_compatibility" style="width:20%;"/>
-</a>
+| Supported on Windows versions with winget (Windows Package Manager) support: Windows 10 Version 1809 (Build 17763) and later or Windows 11 |                       [![windows_compatibility](https://github.com/user-attachments/assets/db2b5487-b5bf-45d9-8948-48bb88162f17)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)                       |
+| :--- | :---: |
 
 ## Usage
 

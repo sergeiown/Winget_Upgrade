@@ -3,36 +3,68 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
+const { promisify } = require('util');
 const { checkAndTrimLogFile, executeAndLog } = require('./utils');
 const settings = require('./settings');
 
-function setConsoleTitle(title) {
-    exec(`title ${title}`);
+const execAsync = promisify(exec);
+
+async function setConsoleTitle(title) {
+    try {
+        await execAsync(`title ${title}`);
+    } catch (error) {
+        console.error(`Failed to set console title: ${error}`);
+    }
 }
 
-function getWingetVersion(callback) {
-    exec(settings.wingetVersion, (error, stdout) => {
-        if (error) {
-            callback(null);
-        } else {
-            callback(stdout.trim());
-        }
-    });
+async function getWingetVersion() {
+    try {
+        const { stdout } = await execAsync(settings.wingetVersion);
+        return stdout.trim();
+    } catch (error) {
+        return null;
+    }
 }
 
-function checkForWinget() {
-    setConsoleTitle('Winget Upgrade');
+async function checkForWinget() {
+    await setConsoleTitle('Winget Upgrade');
 
-    exec(settings.wingetPath, (error, stdout) => {
+    try {
+        const { stdout } = await execAsync(settings.wingetPath);
         console.clear();
 
-        if (error) {
-            console.error('Error: winget is not installed on this system.');
+        const version = await getWingetVersion();
+        if (version) {
+            console.log(`Winget ${version} is installed on the system.${os.EOL}`);
+        } else {
+            throw new Error('Unable to determine winget version.');
+        }
 
-            console.log(`
+        const wingetLocation = stdout.trim();
+        const command = `${wingetLocation} ${settings.wingetArgs.join(' ')}`;
+
+        await executeAndLog(command, settings.logFilePath, async () => {
+            await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
+
+            setTimeout(() => {
+                process.stdin.setRawMode(true);
+                process.stdin.resume();
+                process.stdin.on('data', process.exit.bind(process, 0));
+
+                console.log(settings.finalMessage);
+            }, 1000);
+
+            setTimeout(() => {
+                process.exit(0);
+            }, 10000);
+        });
+    } catch (error) {
+        console.error('Error: winget is not installed on this system.');
+
+        console.log(`
 Possible solutions:
 
 1. Make sure that winget is installed on your system and that its location is 
@@ -50,40 +82,16 @@ Possible solutions:
    preventing winget from running.
 `);
 
-            fs.appendFileSync(settings.logFilePath, `${os.EOL}>> ${new Date().toLocaleString()}${os.EOL}`);
-            fs.appendFileSync(settings.logFilePath, 'Error: winget is not installed on this system.');
+        await fs.appendFile(settings.logFilePath, `${os.EOL}>> ${new Date().toLocaleString()}${os.EOL}`);
+        await fs.appendFile(settings.logFilePath, 'Error: winget is not installed on this system.');
 
-            console.log('Press any key to exit...');
-            process.stdin.setRawMode(true);
-            process.stdin.resume();
-            process.stdin.on('data', () => {
-                process.exit(1);
-            });
-        } else {
-            getWingetVersion((version) => {
-                console.log(`Winget ${version} is installed on the system.${os.EOL}`);
-            });
-
-            const wingetLocation = stdout.trim();
-
-            const command = `${wingetLocation} ${settings.wingetArgs.join(' ')}`;
-
-            executeAndLog(command, settings.logFilePath, () => {
-                checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
-                setTimeout(() => {
-                    process.stdin.setRawMode(true);
-                    process.stdin.resume();
-                    process.stdin.on('data', process.exit.bind(process, 0));
-
-                    console.log(settings.finalMessage);
-                }, 1000);
-
-                setTimeout(() => {
-                    process.exit(0);
-                }, 10000);
-            });
-        }
-    });
+        console.log('Press any key to exit...');
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        process.stdin.on('data', () => {
+            process.exit(1);
+        });
+    }
 }
 
 checkForWinget();

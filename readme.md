@@ -63,6 +63,7 @@ When the program is finished updating, it automatically exits to free up system 
 - `main.js`: The main program file.
 - `utils.js`: Module for executing commands and logging events.
 - `settings.js`: A module that contains the necessary settings for executing commands and logging events.
+- `start_menu_shortcut_enabler.bat`: a batch script that adds the `winget_upgrade.exe` shortcut to the Windows Start Menu or removes it if necessary.
 
 ## License
 

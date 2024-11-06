@@ -6,8 +6,8 @@ Winget Upgrader is a Node.js command line tool that automates the process of upd
 
 |  | Structure and appearance |
 | --- | --- |
-| Dependencies | ![image](https://github.com/user-attachments/assets/7101a8c0-8c15-4f11-8515-90b155c6e1b0) |
-| Console appearance | ![image](https://github.com/sergeiown/Winget_Upgrade/assets/112722061/3620b5fe-daf2-4a8d-8fc9-2fcaf673c25b) |
+| Dependencies | ![image](https://github.com/user-attachments/assets/c0f0742d-666a-456a-9432-d6c593ceaaca) |
+| Console appearance | ![image](https://github.com/user-attachments/assets/3bbe380f-55da-437d-aa43-f53ee7606ca0) |
 
 Winget Upgrader uses Winget commands to update all software installed on your computer. It automatically checks for Winget on your system, performs the software updates, and keeps an event log for easy tracking of the process.
 
@@ -20,18 +20,44 @@ a useful tool for keeping your system up to date.
 
 ## Functionality
 
-### Check for Winget availability
-Before starting the update, the program checks if Winget is installed on the system. If Winget is not installed, the program displays an error and stops working.
+### 1. Checking the availability of Winget
+Before starting the update, the program checks whether Winget is installed on the system. If Winget is not installed, the program displays an error message and stops execution, providing instructions on how to install it.
 
-### Updating programs
-Winget Upgrader uses the `winget upgrade --all` command to upgrade all installed programs. It automatically accepts the terms of the agreement and disables interactivity so that the upgrade process is continuous.
+Next, the program checks the version of Winget. If the version of Winget is less than the one required for correct execution of commands, the program displays an error message and provides instructions on how to update Winget to the latest version via the Microsoft Store or the command line.
 
-### Logging
-The program keeps a log of events in the `winget_upgrade.log` file, where it stores information about actions performed, errors and other events related to the upgrade process.
-The `winget_upgrade.log` log file is saved in `%USERPROFILE%\documents\` folder.
+### 2. Upgrading programs
+The Winget Upgrade program uses the `winget export' and `winget import' commands to update all installed programs. Upgrade process:
+- Automatically accepts the terms of the agreement.
+- Disables interactivity, allowing the upgrade process to continue without interruption.
 
-### Limiting the size of the log
-The log is automatically truncated if its size exceeds 256 KB to avoid file overflow.
+### 3. Logging.
+The program keeps a log of events in the file `winget_upgrade.log`, which stores information about:
+- Actions performed.
+- Errors.
+- Other events related to the upgrade process.
+
+The log file `winget_upgrade.log` is stored in the folder `%USERPROFILE%\documents\`.
+
+### 4. Limiting the size of the log
+The log is automatically truncated if its size exceeds 256 KB to avoid file overflow. 
+
+### 5. Dynamic creation and application of an ignore file
+- When the program is first launched, it generates an ignore file template `ignore.json`, which specifies the packages that do not need to be updated. The user has the opportunity to add all the necessary packages, it should be noted that ***package names are case sensitive***. The template has the following structure:
+  ```json
+  {
+    "Packages": [
+      {
+        "name": "REPLACE_WITH_PACKAGE_NAME"
+      },
+      {
+        "name": "REPLACE_WITH_PACKAGE_NAME"
+      }
+    ]
+  }
+  ```
+- Once created the program tries to apply this ignore file. If the structure of the ignore file is invalid the program displays a warning message.
+
+- The program displays information about packets that are ignored in the console and log, forming messages for each packet on a new line which makes it easier to read.
 
 ## System requirements
 

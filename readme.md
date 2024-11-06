@@ -26,7 +26,7 @@ Before starting the update, the program checks whether Winget is installed on th
 Next, the program checks the version of Winget. If the version of Winget is less than the one required for correct execution of commands, the program displays an error message and provides instructions on how to update Winget to the latest version via the Microsoft Store or the command line.
 
 ### 2. Upgrading programs
-The Winget Upgrade program uses the `winget export' and `winget import' commands to update all installed programs. Upgrade process:
+The Winget Upgrade program uses the `winget export` and `winget import` commands to update all installed programs. Upgrade process:
 - Automatically accepts the terms of the agreement.
 - Disables interactivity, allowing the upgrade process to continue without interruption.
 

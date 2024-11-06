@@ -9,25 +9,20 @@ const { exec } = require('child_process');
 const { createWriteStream } = require('fs');
 
 async function executeAndLog(command, logFilePath, callback) {
-    const currentDate = new Date().toLocaleString();
-
     try {
-        await fs.appendFile(logFilePath, `${os.EOL}>> ${currentDate}${os.EOL}`);
-
         const childProcess = exec(command);
-
         const logStream = createWriteStream(logFilePath, { flags: 'a' });
 
         childProcess.stdout.on('data', (data) => {
             const lines = data.toString().split(os.EOL);
-
             lines.forEach((line) => {
                 const trimmedLine = line.trim();
-
                 if (
                     !/[░▒█]/.test(trimmedLine) &&
                     /[a-zA-Zа-яА-Я0-9]/.test(trimmedLine) &&
-                    !trimmedLine.includes('have version numbers that cannot be determined')
+                    !trimmedLine.includes('Found an existing package already installed.') &&
+                    !trimmedLine.includes('No available upgrade found.') &&
+                    !trimmedLine.includes('No newer package versions are available from the configured sources.')
                 ) {
                     logStream.write(trimmedLine + os.EOL);
                 }
@@ -44,7 +39,6 @@ async function executeAndLog(command, logFilePath, callback) {
         childProcess.stderr.pipe(process.stderr);
 
         await new Promise((resolve) => childProcess.on('exit', resolve));
-
         logStream.end();
         callback(logFilePath);
     } catch (error) {
@@ -52,14 +46,68 @@ async function executeAndLog(command, logFilePath, callback) {
     }
 }
 
+async function filterIgnoredPackages(ignoreFilePath, listFilePath, logFilePath) {
+    try {
+        let ignoreData = { Packages: [{ name: 'REPLACE_WITH_PACKAGE_NAME' }, { name: 'REPLACE_WITH_PACKAGE_NAME' }] };
+        let ignoreFileApplied = false;
+
+        try {
+            const data = await fs.readFile(ignoreFilePath, 'utf-8');
+            ignoreData = JSON.parse(data);
+            ignoreFileApplied = true;
+        } catch (error) {
+            await fs.writeFile(ignoreFilePath, JSON.stringify(ignoreData, null, 2));
+            const message = `Info: Created new ignore file template at ${ignoreFilePath}`;
+            console.log(message);
+            await fs.appendFile(logFilePath, `${message}${os.EOL}`);
+        }
+
+        const listData = JSON.parse(await fs.readFile(listFilePath, 'utf-8'));
+        const removedPackages = [];
+
+        listData.Sources.forEach((source) => {
+            source.Packages = source.Packages.filter((pkg) => {
+                const isIgnored = ignoreData.Packages.some((ignorePkg) =>
+                    pkg.PackageIdentifier.includes(ignorePkg.name)
+                );
+
+                if (isIgnored) {
+                    removedPackages.push(pkg.PackageIdentifier);
+                }
+                return !isIgnored;
+            });
+        });
+
+        await fs.writeFile(listFilePath, JSON.stringify(listData, null, 2));
+
+        const ignoreStatusMessage = ignoreFileApplied
+            ? 'Info: Ignore file successfully applied.'
+            : 'Warning: Ignore file not applied. Check if it has valid structure.';
+
+        console.log(ignoreStatusMessage);
+        await fs.appendFile(logFilePath, `${ignoreStatusMessage}${os.EOL}`);
+
+        if (removedPackages.length > 0) {
+            const removalMessages = removedPackages
+                .map((packageList) => `Package is ignored: ${packageList}${os.EOL}`)
+                .join('');
+
+            console.log(removalMessages);
+            await fs.appendFile(logFilePath, removalMessages);
+        }
+    } catch (error) {
+        const errorMessage = `Failed to filter ignored packages: ${error.message}`;
+        console.error(errorMessage);
+        await fs.appendFile(logFilePath, `${errorMessage}${os.EOL}`);
+    }
+}
+
 async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
     try {
         const stats = await fs.stat(logFilePath);
-
         if (stats.size > maxFileSizeInBytes) {
             const logContent = await fs.readFile(logFilePath, 'utf-8');
             const blocks = logContent.split(`${os.EOL}${os.EOL}`);
-
             if (blocks.length > 1) {
                 const trimmedLog = blocks.slice(1).join(`${os.EOL}${os.EOL}`);
                 await fs.writeFile(logFilePath, trimmedLog, 'utf-8');
@@ -76,4 +124,5 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
 module.exports = {
     executeAndLog,
     checkAndTrimLogFile,
+    filterIgnoredPackages,
 };

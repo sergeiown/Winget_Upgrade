@@ -7,7 +7,7 @@ const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { checkAndTrimLogFile, executeAndLog } = require('./utils');
+const { checkAndTrimLogFile, executeAndLog, filterIgnoredPackages } = require('./utils');
 const settings = require('./settings');
 
 const execAsync = promisify(exec);
@@ -23,13 +23,42 @@ async function setConsoleTitle(title) {
 async function getWingetVersion() {
     try {
         const { stdout } = await execAsync(settings.wingetVersion);
-        return stdout.trim();
+        const version = stdout.trim().replace(/^v/, '');
+        const [major, minor] = version.split('.').map(Number);
+
+        if (major < 1 || (major === 1 && minor < 4)) {
+            const logMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}
+Please update winget to continue. Instructions:${os.EOL}
+1. Open Microsoft Store and update **App Installer** to the latest version.${os.EOL}
+2. Alternatively, run the following command in the terminal:
+   winget upgrade --id Microsoft.DesktopAppInstaller -e --source msstore${os.EOL}
+3. Ensure your Windows version is Windows 10 version 1809 or later, or Windows 11.${os.EOL}`;
+
+            await fs.appendFile(
+                settings.logFilePath,
+                `Error: Outdated winget version (${version}). Update required.${os.EOL}`
+            );
+
+            console.log(logMessage);
+            console.log(`Press any key to exit...`);
+
+            await new Promise((resolve) => process.stdin.once('data', resolve));
+
+            process.exit(1);
+        }
+
+        return version;
     } catch (error) {
+        await fs.appendFile(settings.logFilePath, `Error: Failed to retrieve winget version: ${error}${os.EOL}`);
+
         return null;
     }
 }
 
 async function checkForWinget() {
+    const currentDate = new Date().toLocaleString();
+    await fs.appendFile(settings.logFilePath, `${os.EOL}>> ${currentDate}${os.EOL}`);
+
     await setConsoleTitle('Winget Upgrade');
 
     try {
@@ -44,48 +73,48 @@ async function checkForWinget() {
         }
 
         const wingetLocation = stdout.trim();
-        const command = `${wingetLocation} ${settings.wingetArgs.join(' ')}`;
 
-        await executeAndLog(command, settings.logFilePath, async () => {
-            await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
+        const exportCommand = `${wingetLocation} ${settings.wingetArgs.export.join(' ')}`;
+        await executeAndLog(exportCommand, settings.logFilePath, async () => {
+            await filterIgnoredPackages(settings.ignoreFilePath, settings.listFilePath, settings.logFilePath);
 
-            setTimeout(() => {
-                process.stdin.setRawMode(true);
-                process.stdin.resume();
-                process.stdin.on('data', process.exit.bind(process, 0));
+            const importCommand = `${wingetLocation} ${settings.wingetArgs.import.join(' ')}`;
+            await executeAndLog(importCommand, settings.logFilePath, async () => {
+                await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
 
-                console.log(settings.finalMessage);
-            }, 1000);
+                await fs.unlink(settings.listFilePath);
 
-            setTimeout(() => {
-                process.exit(0);
-            }, 10000);
+                setTimeout(() => {
+                    process.stdin.setRawMode(true);
+                    process.stdin.resume();
+                    process.stdin.on('data', process.exit.bind(process, 0));
+                    fs.appendFile(settings.logFilePath, settings.finalLogMessage);
+                    console.log(settings.finalMessage);
+                }, 1000);
+
+                setTimeout(() => {
+                    process.exit(0);
+                }, 10000);
+            });
         });
     } catch (error) {
-        console.error('Error: winget is not installed on this system.');
+        console.error(`Error: winget is not installed on this system.${os.EOL}`);
 
-        console.log(`
-Possible solutions:
-
+        console.log(`Possible solutions:${os.EOL}
 1. Make sure that winget is installed on your system and that its location is 
    included in the PATH environment variable. To check, open a command prompt 
    and type "winget". If the command is not recognized, add the path to the 
-   winget executable in the system's PATH environment variable.
-
+   winget executable in the system's PATH environment variable.${os.EOL}
 2. Ensure that your Windows version supports winget (Windows 10 version 1809 or 
-   later, or Windows 11).
-
+   later, or Windows 11).${os.EOL}
 3. Install or reinstall "App Installer". For more details, see the official guide: 
-   https://learn.microsoft.com/en-us/windows/msix/app-installer/install-update-app-installer
-
+   https://learn.microsoft.com/en-us/windows/msix/app-installer/install-update-app-installer${os.EOL}
 4. Check if there are any group policy restrictions or administrative settings 
-   preventing winget from running.
-`);
+   preventing winget from running.${os.EOL}`);
 
-        await fs.appendFile(settings.logFilePath, `${os.EOL}>> ${new Date().toLocaleString()}${os.EOL}`);
-        await fs.appendFile(settings.logFilePath, 'Error: winget is not installed on this system.');
+        await fs.appendFile(settings.logFilePath, `Error: winget is not installed on this system.${os.EOL}`);
 
-        console.log('Press any key to exit...');
+        console.log(`Press any key to exit...`);
         process.stdin.setRawMode(true);
         process.stdin.resume();
         process.stdin.on('data', () => {

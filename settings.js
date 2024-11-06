@@ -8,6 +8,7 @@ const path = require('path');
 const documentsPath = path.join(os.homedir(), 'Documents');
 
 const settings = {
+    wingetUpgradeVersion: 'Winget Upgrade 1.3',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(documentsPath, 'winget_upgrade.log'),

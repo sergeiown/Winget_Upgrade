@@ -59,7 +59,7 @@ async function checkForWinget() {
     const currentDate = new Date().toLocaleString();
     await fs.appendFile(settings.logFilePath, `${os.EOL}>> ${currentDate}${os.EOL}`);
 
-    await setConsoleTitle('Winget Upgrade');
+    await setConsoleTitle(settings.wingetUpgradeVersion);
 
     try {
         const { stdout } = await execAsync(settings.wingetPath);

@@ -20,13 +20,26 @@ async function setConsoleTitle(title) {
     }
 }
 
+async function waitForKeyPressAndExit() {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+
+    await new Promise((resolve) => {
+        process.stdin.once('data', () => {
+            resolve();
+        });
+    });
+
+    process.exit(1);
+}
+
 async function getWingetVersion() {
     try {
         const { stdout } = await execAsync(settings.wingetVersion);
         const version = stdout.trim().replace(/^v/, '');
         const [major, minor] = version.split('.').map(Number);
 
-        if (major < 1 || (major === 1 && minor < 4)) {
+        if (major < 2 || (major === 1 && minor < 4)) {
             const versionMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}`;
             logMessage(versionMessage);
 
@@ -35,9 +48,7 @@ async function getWingetVersion() {
             console.log(settings.outdatedVersionInstructions);
             console.log(`Press any key to exit...`);
 
-            await new Promise((resolve) => process.stdin.once('data', resolve));
-
-            process.exit(1);
+            await waitForKeyPressAndExit();
         }
 
         return version;
@@ -98,9 +109,7 @@ async function checkForWinget() {
         console.log(settings.notInstalledSollutions);
         console.log(`Press any key to exit...`);
 
-        await new Promise((resolve) => process.stdin.once('data', resolve));
-
-        process.exit(1);
+        await waitForKeyPressAndExit();
     }
 }
 

@@ -39,7 +39,7 @@ async function getWingetVersion() {
         const version = stdout.trim().replace(/^v/, '');
         const [major, minor] = version.split('.').map(Number);
 
-        if (major < 2 || (major === 1 && minor < 4)) {
+        if (major < 1 || (major === 1 && minor < 4)) {
             const versionMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}`;
             logMessage(versionMessage);
 

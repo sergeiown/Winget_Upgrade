@@ -7,7 +7,7 @@ const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { checkAndTrimLogFile, executeAndLog, filterIgnoredPackages } = require('./utils');
+const { logMessage, checkAndTrimLogFile, executeAndLog, filterIgnoredPackages } = require('./utils');
 const settings = require('./settings');
 
 const execAsync = promisify(exec);
@@ -27,11 +27,11 @@ async function getWingetVersion() {
         const [major, minor] = version.split('.').map(Number);
 
         if (major < 1 || (major === 1 && minor < 4)) {
-            const logMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}`;
+            const versionMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}`;
+            logMessage(versionMessage);
 
-            await fs.appendFile(settings.logFilePath, logMessage);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
-            console.log(logMessage);
             console.log(settings.outdatedVersionInstructions);
             console.log(`Press any key to exit...`);
 
@@ -42,7 +42,7 @@ async function getWingetVersion() {
 
         return version;
     } catch (error) {
-        await fs.appendFile(settings.logFilePath, `Error: Failed to retrieve winget version: ${error}${os.EOL}`);
+        logMessage(`Error: Failed to retrieve winget version: ${error}${os.EOL}`);
 
         return null;
     }
@@ -50,7 +50,7 @@ async function getWingetVersion() {
 
 async function checkForWinget() {
     const currentDate = new Date().toLocaleString();
-    await fs.appendFile(settings.logFilePath, `${os.EOL}>> ${currentDate}${os.EOL}`);
+    logMessage(`${os.EOL}>> ${currentDate}${os.EOL}`);
 
     await setConsoleTitle(settings.wingetUpgradeVersion);
 
@@ -62,7 +62,7 @@ async function checkForWinget() {
         if (version) {
             console.log(`Winget ${version} is installed on the system.${os.EOL}`);
         } else {
-            throw new Error('Unable to determine winget version.');
+            throw new Error(`Unable to determine winget version.`);
         }
 
         const wingetLocation = stdout.trim();
@@ -91,18 +91,16 @@ async function checkForWinget() {
             });
         });
     } catch (error) {
-        console.error(`Error: winget is not installed on this system.${os.EOL}`);
+        logMessage(`Error: winget is not installed on this system.${os.EOL}`);
+
+        await new Promise((resolve) => process.stdin.once('data', resolve));
 
         console.log(settings.notInstalledSollutions);
-
-        await fs.appendFile(settings.logFilePath, `Error: winget is not installed on this system.${os.EOL}`);
-
         console.log(`Press any key to exit...`);
-        process.stdin.setRawMode(true);
-        process.stdin.resume();
-        process.stdin.on('data', () => {
-            process.exit(1);
-        });
+
+        await new Promise((resolve) => process.stdin.once('data', resolve));
+
+        process.exit(1);
     }
 }
 

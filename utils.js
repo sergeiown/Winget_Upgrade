@@ -7,6 +7,15 @@ const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
 const { createWriteStream } = require('fs');
+const settings = require('./settings');
+
+async function logMessage(message) {
+    await fs
+        .appendFile(settings.logFilePath, message)
+        .catch((err) => console.error(`Error writing to log file: ${err.message}`));
+
+    console.log(message);
+}
 
 async function executeAndLog(command, logFilePath, callback) {
     try {
@@ -55,13 +64,11 @@ async function filterIgnoredPackages(ignoreFilePath, listFilePath, logFilePath) 
             ignoreData = JSON.parse(data);
 
             const ignoreStatusMessage = `Ignore list successfully applied.`;
-            console.log(ignoreStatusMessage);
-            await fs.appendFile(logFilePath, `${ignoreStatusMessage}${os.EOL}`);
+            logMessage(`${ignoreStatusMessage}${os.EOL}`);
         } catch (error) {
             await fs.writeFile(ignoreFilePath, JSON.stringify(ignoreData, null, 2));
             const message = `Info: Created new ignore list template at ${ignoreFilePath}`;
-            console.log(message);
-            await fs.appendFile(logFilePath, `${message}${os.EOL}`);
+            logMessage(`${message}${os.EOL}`);
         }
 
         const listData = JSON.parse(await fs.readFile(listFilePath, 'utf-8'));
@@ -87,12 +94,10 @@ async function filterIgnoredPackages(ignoreFilePath, listFilePath, logFilePath) 
                 ? removedPackages.map((packageList) => `Package is ignored: ${packageList}${os.EOL}`).join('')
                 : `Ignore list does not contain any packages.${os.EOL}`;
 
-        console.log(removalMessages);
-        await fs.appendFile(logFilePath, removalMessages);
+        logMessage(removalMessages);
     } catch (error) {
-        const errorMessage = `Failed to filter ignored packages: ${error.message}`;
-        console.error(errorMessage);
-        await fs.appendFile(logFilePath, `${errorMessage}${os.EOL}`);
+        const errorMessage = `Failed to filter ignored packages: ${error.message}${os.EOL}`;
+        logMessage(errorMessage);
     }
 }
 
@@ -116,6 +121,7 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
 }
 
 module.exports = {
+    logMessage,
     executeAndLog,
     checkAndTrimLogFile,
     filterIgnoredPackages,

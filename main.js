@@ -26,20 +26,13 @@ async function getWingetVersion() {
         const version = stdout.trim().replace(/^v/, '');
         const [major, minor] = version.split('.').map(Number);
 
-        if (major < 1 || (major === 1 && minor < 4)) {
-            const logMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}
-Please update winget to continue. Instructions:${os.EOL}
-1. Open Microsoft Store and update **App Installer** to the latest version.${os.EOL}
-2. Alternatively, run the following command in the terminal:
-   winget upgrade --id Microsoft.DesktopAppInstaller -e --source msstore${os.EOL}
-3. Ensure your Windows version is Windows 10 version 1809 or later, or Windows 11.${os.EOL}`;
+        if (major < 2 || (major === 1 && minor < 4)) {
+            const logMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}`;
 
-            await fs.appendFile(
-                settings.logFilePath,
-                `Error: Outdated winget version (${version}). Update required.${os.EOL}`
-            );
+            await fs.appendFile(settings.logFilePath, logMessage);
 
             console.log(logMessage);
+            console.log(settings.outdatedVersionInstructions);
             console.log(`Press any key to exit...`);
 
             await new Promise((resolve) => process.stdin.once('data', resolve));
@@ -100,17 +93,7 @@ async function checkForWinget() {
     } catch (error) {
         console.error(`Error: winget is not installed on this system.${os.EOL}`);
 
-        console.log(`Possible solutions:${os.EOL}
-1. Make sure that winget is installed on your system and that its location is 
-   included in the PATH environment variable. To check, open a command prompt 
-   and type "winget". If the command is not recognized, add the path to the 
-   winget executable in the system's PATH environment variable.${os.EOL}
-2. Ensure that your Windows version supports winget (Windows 10 version 1809 or 
-   later, or Windows 11).${os.EOL}
-3. Install or reinstall "App Installer". For more details, see the official guide: 
-   https://learn.microsoft.com/en-us/windows/msix/app-installer/install-update-app-installer${os.EOL}
-4. Check if there are any group policy restrictions or administrative settings 
-   preventing winget from running.${os.EOL}`);
+        console.log(settings.notInstalledSollutions);
 
         await fs.appendFile(settings.logFilePath, `Error: winget is not installed on this system.${os.EOL}`);
 

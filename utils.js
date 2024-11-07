@@ -49,15 +49,17 @@ async function executeAndLog(command, logFilePath, callback) {
 async function filterIgnoredPackages(ignoreFilePath, listFilePath, logFilePath) {
     try {
         let ignoreData = { Packages: [{ name: 'REPLACE_WITH_PACKAGE_NAME' }, { name: 'REPLACE_WITH_PACKAGE_NAME' }] };
-        let ignoreFileApplied = false;
 
         try {
             const data = await fs.readFile(ignoreFilePath, 'utf-8');
             ignoreData = JSON.parse(data);
-            ignoreFileApplied = true;
+
+            const ignoreStatusMessage = `Ignore list successfully applied.`;
+            console.log(ignoreStatusMessage);
+            await fs.appendFile(logFilePath, `${ignoreStatusMessage}${os.EOL}`);
         } catch (error) {
             await fs.writeFile(ignoreFilePath, JSON.stringify(ignoreData, null, 2));
-            const message = `Info: Created new ignore file template at ${ignoreFilePath}`;
+            const message = `Info: Created new ignore list template at ${ignoreFilePath}`;
             console.log(message);
             await fs.appendFile(logFilePath, `${message}${os.EOL}`);
         }
@@ -80,21 +82,13 @@ async function filterIgnoredPackages(ignoreFilePath, listFilePath, logFilePath) 
 
         await fs.writeFile(listFilePath, JSON.stringify(listData, null, 2));
 
-        const ignoreStatusMessage = ignoreFileApplied
-            ? 'Info: Ignore file successfully applied.'
-            : 'Warning: Ignore file not applied. Check if it has valid structure.';
+        const removalMessages =
+            removedPackages.length > 0
+                ? removedPackages.map((packageList) => `Package is ignored: ${packageList}${os.EOL}`).join('')
+                : `Ignore list does not contain any packages.${os.EOL}`;
 
-        console.log(ignoreStatusMessage);
-        await fs.appendFile(logFilePath, `${ignoreStatusMessage}${os.EOL}`);
-
-        if (removedPackages.length > 0) {
-            const removalMessages = removedPackages
-                .map((packageList) => `Package is ignored: ${packageList}${os.EOL}`)
-                .join('');
-
-            console.log(removalMessages);
-            await fs.appendFile(logFilePath, removalMessages);
-        }
+        console.log(removalMessages);
+        await fs.appendFile(logFilePath, removalMessages);
     } catch (error) {
         const errorMessage = `Failed to filter ignored packages: ${error.message}`;
         console.error(errorMessage);

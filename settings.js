@@ -33,9 +33,18 @@ const settings = {
             '--ignore-warnings',
         ],
     },
-    finalMessage: `${os.EOL}Upgrade is complete.${os.EOL.repeat(
-        2
-    )}Program will automatically exit after 10 seconds, or press any key to exit immediately.`,
+    date: new Date()
+        .toLocaleString('uk-UA', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        })
+        .replace(/,\s*/g, ' ')
+        .trim(),
+    finalMessage: `Program will automatically exit after 10 seconds, or press any key to exit immediately.${os.EOL}`,
     finalLogMessage: `Upgrade is complete.${os.EOL}`,
     notInstalledSollutions: `Possible solutions:${os.EOL}
 1. Make sure that winget is installed on your system and that its location is 

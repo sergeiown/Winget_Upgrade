@@ -6,8 +6,32 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
+const { promisify } = require('util');
 const { createWriteStream } = require('fs');
 const settings = require('./settings');
+
+const execAsync = promisify(exec);
+
+async function setConsoleTitle(title) {
+    try {
+        await execAsync(`title ${title}`);
+    } catch (error) {
+        console.error(`Failed to set console title: ${error}`);
+    }
+}
+
+async function waitForKeyPressAndExit(exitCode) {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+
+    await new Promise((resolve) => {
+        process.stdin.once('data', () => {
+            resolve();
+        });
+    });
+
+    process.exit(exitCode);
+}
 
 async function logMessage(message) {
     await fs
@@ -55,7 +79,7 @@ async function executeAndLog(command, logFilePath, callback) {
     }
 }
 
-async function filterIgnoredPackages(ignoreFilePath, listFilePath, logFilePath) {
+async function filterIgnoredPackages(ignoreFilePath, listFilePath) {
     try {
         let ignoreData = { Packages: [{ name: 'REPLACE_WITH_PACKAGE_NAME' }, { name: 'REPLACE_WITH_PACKAGE_NAME' }] };
 
@@ -121,6 +145,8 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
 }
 
 module.exports = {
+    setConsoleTitle,
+    waitForKeyPressAndExit,
     logMessage,
     executeAndLog,
     checkAndTrimLogFile,

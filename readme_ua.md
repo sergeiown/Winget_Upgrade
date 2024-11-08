@@ -6,7 +6,7 @@ Winget Upgrader - це інструмент командного рядка Node
 
 |  | Структура та зовнішній вигляд |
 | --- | --- |
-| Залежності | ![image](https://github.com/user-attachments/assets/c0f0742d-666a-456a-9432-d6c593ceaaca) |
+| Залежності | ![image](https://github.com/user-attachments/assets/510424c7-1998-41a6-8bde-73900a86bb31) |
 | Зовнішній вигляд консолі | ![image](https://github.com/user-attachments/assets/3bbe380f-55da-437d-aa43-f53ee7606ca0) |
 
 Winget Upgrader використовує команди Winget для оновлення всього програмного забезпечення, встановленого на вашому комп'ютері. Він автоматично перевіряє наявність Winget на вашій системі, виконує оновлення програм та веде журнал подій для зручності слідкування за процесом.

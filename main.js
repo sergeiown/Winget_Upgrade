@@ -57,7 +57,7 @@ async function tryToPerformUpgrade() {
         if (version) {
             console.log(`Winget ${version} is installed on the system.${os.EOL}`);
         } else {
-            throw new Error(`Unable to determine winget version.`);
+            throw new Error(`Winget is not installed.`);
         }
 
         const wingetLocation = stdout.trim();
@@ -89,9 +89,12 @@ async function tryToPerformUpgrade() {
             });
         });
     } catch (error) {
-        await logMessage(`Error: winget is not installed on this system.${os.EOL}`);
-
-        console.log(settings.notInstalledSollutions + os.EOL + `Press any key to exit...`);
+        if (error.message.includes(`Winget is not installed.`)) {
+            await logMessage(`Error: winget is not installed on this system.${os.EOL}`);
+            console.log(settings.notInstalledSollutions + os.EOL + `Press any key to exit...`);
+        } else {
+            await logMessage(`Unexpected error occurred: ${error.message}${os.EOL}`);
+        }
 
         await waitForKeyPressAndExit(1);
     }

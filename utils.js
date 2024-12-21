@@ -134,9 +134,7 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
             if (blocks.length > 1) {
                 const trimmedLog = blocks.slice(2).join(`${os.EOL}${os.EOL}`);
                 await fs.writeFile(logFilePath, trimmedLog, 'utf-8');
-                const logMessage = `Log file size reduced.`;
-                console.log(logMessage);
-                logMessage(logMessage);
+                logMessage(`Log file size reduced.${os.EOL}`);
             } else {
                 await fs.truncate(logFilePath, 0);
             }

@@ -53,8 +53,7 @@ const settings = {
    winget executable in the system's PATH environment variable.${os.EOL}
 2. Ensure that your Windows version supports winget (Windows 10 version 1809 or 
    later, or Windows 11).${os.EOL}
-3. Install or reinstall "App Installer". For more details, see the official guide: 
-   https://learn.microsoft.com/en-us/windows/msix/app-installer/install-update-app-installer${os.EOL}
+3. Install or reinstall "App Installer".
 4. Check if there are any group policy restrictions or administrative settings 
    preventing winget from running.${os.EOL}`,
     outdatedVersionInstructions: `Please update winget to continue. Instructions:${os.EOL}

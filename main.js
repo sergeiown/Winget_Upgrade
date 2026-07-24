@@ -7,6 +7,7 @@ const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const {
+    delay,
     setConsoleTitle,
     waitForKeyPressAndExit,
     logMessage,
@@ -52,6 +53,7 @@ async function tryToPerformUpgrade() {
     await setConsoleTitle(settings.wingetUpgradeVersion);
 
     await checkForUpdate();
+    await delay(settings.stepPauseMs);
 
     try {
         const { stdout } = await execAsync(settings.wingetPath);
@@ -63,12 +65,20 @@ async function tryToPerformUpgrade() {
             throw new Error(`Winget is not installed.`);
         }
 
+        await delay(settings.stepPauseMs);
+
         const wingetLocation = stdout.trim();
 
         const packages = await discoverUpgradablePackages(wingetLocation, settings.ignoreFilePath);
 
+        if (packages.length === 0) {
+            await logMessage(`No updates found - everything is up to date.${os.EOL}`, { echo: false });
+        }
+
+        await delay(settings.stepPauseMs);
+
         consoleUi.printDiscoveredPackages(packages);
-        await new Promise((resolve) => setTimeout(resolve, settings.preUpgradePauseMs));
+        await delay(settings.preUpgradePauseMs);
 
         const results = [];
         const overallStartedAt = Date.now();

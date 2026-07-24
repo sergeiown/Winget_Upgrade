@@ -23,7 +23,6 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] **Critical fix**: the previous two releases failed to start at all (`Pkg: Error reading from file.`). The `rcedit` step added to embed a custom application icon was corrupting the bundle `pkg` embeds in the executable. The icon step has been removed from the build until a safe way to apply it is found.
-- [x] Fixed a crash on exit when the console doesn't support raw keyboard input (`process.stdin.setRawMode`), which could close the window right after the summary instead of pausing.
-- [x] The "run at sign-in" installer task is now checked by default on every install, including upgrades over a previous version (it used to reset to unchecked on upgrades).
+- [x] Added a short pause after each individual check (update check, winget version, ignore-list application) so the console doesn't fly by too fast to read, on top of the existing pause before upgrades start.
+- [x] The log file now records an entry when nothing needs updating, not just when packages are actually upgraded.
 - [ ] Future plans are left to the future.

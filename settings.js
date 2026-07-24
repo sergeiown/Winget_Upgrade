@@ -7,8 +7,8 @@ const os = require('os');
 const path = require('path');
 
 const settings = {
-    appVersion: '2.0.5',
-    wingetUpgradeVersion: 'Winget Upgrade 2.0.5',
+    appVersion: '2.0.6',
+    wingetUpgradeVersion: 'Winget Upgrade 2.0.6',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(process.cwd(), 'winget_upgrade.log'),
@@ -18,6 +18,7 @@ const settings = {
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,
     preUpgradePauseMs: 3000,
+    stepPauseMs: 2000,
     wingetArgs: {
         upgradeList: ['upgrade', '--accept-source-agreements', '--disable-interactivity', '--ignore-warnings'],
         upgrade: [

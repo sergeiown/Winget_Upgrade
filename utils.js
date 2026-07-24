@@ -12,6 +12,10 @@ const settings = require('./settings');
 
 const execAsync = promisify(exec);
 
+function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function setConsoleTitle(title) {
     try {
         await execAsync(`title ${title}`);
@@ -39,12 +43,14 @@ async function waitForKeyPressAndExit(exitCode) {
     process.exit(exitCode);
 }
 
-async function logMessage(message) {
+async function logMessage(message, { echo = true } = {}) {
     await fs
         .appendFile(settings.logFilePath, message)
         .catch((err) => console.error(`Error writing to log file: ${err.message}`));
 
-    console.log(message);
+    if (echo) {
+        console.log(message);
+    }
 }
 
 function isLoggableLine(line) {
@@ -247,6 +253,7 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
 }
 
 module.exports = {
+    delay,
     setConsoleTitle,
     waitForKeyPressAndExit,
     logMessage,

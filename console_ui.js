@@ -97,8 +97,20 @@ function createSpinner(text) {
     };
 }
 
-function printDiscoveredPackages(packages) {
+function printDiscoveredPackages(packages, meta = {}) {
     console.clear();
+
+    const { totalInstalled, upToDateCount, ignoredCount } = meta;
+
+    if (typeof totalInstalled === 'number') {
+        console.log(
+            `${paint('Checked', 'bold', 'cyan')} ${paint(String(totalInstalled), 'bold', 'cyan')} ${paint('installed package(s):', 'bold', 'cyan')} ` +
+                `${paint(`${upToDateCount} up to date`, 'dim')}, ` +
+                `${paint(`${packages.length} to update`, packages.length > 0 ? 'green' : 'dim')}, ` +
+                `${paint(`${ignoredCount} ignored`, 'yellow')}`
+        );
+        console.log();
+    }
 
     if (packages.length === 0) {
         console.log(paint('No updates found - everything is up to date.', 'green'));

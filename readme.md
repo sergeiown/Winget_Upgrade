@@ -31,7 +31,7 @@ The Winget Upgrade program uses `winget upgrade` to discover which installed pac
 - Distinguishes an actual upgrade from "already up to date" and from a genuine failure, so the final summary is accurate.
 
 ### 3. Visual output
-The program pauses briefly after each individual check (update check, winget version, ignore-list application) so nothing flies by too fast to read. Once discovery is done, the list of packages that will be updated is printed and the program pauses again before starting. Then, for each package, the console is cleared and a header with the package name and its position (e.g. `[3/42]`) is shown, followed by a colored, live progress bar with an ETA. Once every package has been processed, a colored summary is printed: how many packages were updated, how many were already up to date, and which ones (if any) failed.
+The program pauses briefly after each individual check (update check, winget version, ignore-list application) so nothing flies by too fast to read. Once discovery is done, it reports how many packages are installed in total, how many are already up to date, how many need an update, and how many are ignored - even when there's nothing to update - then prints the list of packages that will be updated and pauses again before starting. Then, for each package, the console is cleared and a header with the package name and its position (e.g. `[3/42]`) is shown, followed by a colored, live progress bar with an ETA. Once every package has been processed, a colored summary is printed: how many packages were updated, how many were already up to date, and which ones (if any) failed.
 
 ### 4. Logging.
 The program keeps a log of events in the file `winget_upgrade.log`, which stores information about:

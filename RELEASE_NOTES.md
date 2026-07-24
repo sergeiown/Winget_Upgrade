@@ -7,7 +7,7 @@
 
 - **Winget Availability Check**: Before starting the update, the program checks whether Winget is installed on the system. If Winget is not installed, the program displays an error message and stops execution, providing instructions on how to install it. Next, the program checks the version of Winget and provides upgrade instructions if it's too old.
 
-- **Discovery-first Upgrades**: Uses `winget upgrade` to find only the packages that actually have an update available, filters out anything on the ignore list, shows that list, pauses briefly, then upgrades each package individually via `winget upgrade --id` with a live colored progress bar and ETA.
+- **Discovery-first Upgrades**: Uses `winget upgrade` to find only the packages that actually have an update available, filters out anything on the ignore list, reports how many packages are installed in total (up to date / to update / ignored - even when there's nothing to do), pauses briefly, then upgrades each package individually via `winget upgrade --id` with a live colored progress bar and ETA.
 
 - **Ignore List**: A plain text `winget_ignore.txt` - one entry per line, matched as a case-insensitive substring, so the exact package identifier isn't required. Reachable straight from the Start Menu.
 
@@ -23,8 +23,8 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] The "no updates" case now reports real numbers instead of nothing: total installed packages, how many are up to date, how many need an update, and how many are ignored.
+- [x] Fixed a real bug behind those numbers: `winget list` and `winget upgrade` were being run at the same time, and winget doesn't tolerate two of its own processes running concurrently - one of them would fail outright. They now run one after the other.
 - [x] Auto-update no longer asks for confirmation - it downloads, installs, and restarts as soon as a newer release is found.
 - [x] Fixed the update install/restart itself: the app used to wait for the installer while still holding its own executable open, which could stop the file from actually being replaced. It now hands off to a fully detached installer and exits immediately, letting the installer relaunch the new version once it's done.
-- [x] The "Upgrade summary" is no longer shown when there was nothing to update - the "No updates found" message already says everything.
-- [x] Increased the pause after each individual check so there's enough time to actually read it.
 - [ ] Future plans are left to the future.

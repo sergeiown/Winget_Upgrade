@@ -69,15 +69,19 @@ async function tryToPerformUpgrade() {
 
         const wingetLocation = stdout.trim();
 
-        const packages = await discoverUpgradablePackages(wingetLocation, settings.ignoreFilePath);
+        const { packages, totalInstalled, upToDateCount, ignoredCount } = await discoverUpgradablePackages(
+            wingetLocation,
+            settings.ignoreFilePath
+        );
 
-        if (packages.length === 0) {
-            await logMessage(`No updates found - everything is up to date.${os.EOL}`, { echo: false });
-        }
+        await logMessage(
+            `Checked ${totalInstalled} installed package(s): ${upToDateCount} up to date, ${packages.length} to update, ${ignoredCount} ignored.${os.EOL}`,
+            { echo: false }
+        );
 
         await delay(settings.stepPauseMs);
 
-        consoleUi.printDiscoveredPackages(packages);
+        consoleUi.printDiscoveredPackages(packages, { totalInstalled, upToDateCount, ignoredCount });
         await delay(settings.preUpgradePauseMs);
 
         const results = [];

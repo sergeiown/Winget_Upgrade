@@ -153,10 +153,18 @@ function parseUpgradeTable(output) {
 }
 
 async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
-    const command = `${wingetLocation} ${settings.wingetArgs.upgradeList.join(' ')}`;
-    const { stdout } = await execAsync(command);
+    const listCommand = `${wingetLocation} ${settings.wingetArgs.list.join(' ')}`;
+    const upgradeCommand = `${wingetLocation} ${settings.wingetArgs.upgradeList.join(' ')}`;
 
-    const upgradable = parseUpgradeTable(stdout);
+    const execOptions = { maxBuffer: 10 * 1024 * 1024 };
+
+    // winget doesn't tolerate two of its own processes running at once (one fails with a
+    // generic "Command failed"), so these must run one after the other, not in parallel.
+    const listResult = await execAsync(listCommand, execOptions);
+    const upgradeResult = await execAsync(upgradeCommand, execOptions);
+
+    const totalInstalled = parseUpgradeTable(listResult.stdout).length;
+    const upgradable = parseUpgradeTable(upgradeResult.stdout);
     const ignoreEntries = await loadIgnoreList(ignoreFilePath);
     const removedPackages = [];
 
@@ -176,7 +184,12 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
 
     await logMessage(removalMessages);
 
-    return packages;
+    return {
+        packages,
+        totalInstalled,
+        upToDateCount: totalInstalled - upgradable.length,
+        ignoredCount: removedPackages.length,
+    };
 }
 
 function classifyExitCode(code) {

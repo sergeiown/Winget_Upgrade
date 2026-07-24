@@ -13,7 +13,7 @@ const settings = require('./settings');
 const consoleUi = require('./console_ui');
 const { logMessage } = require('./utils');
 
-const CHECK_TIMEOUT_MS = 4000;
+const CHECK_TIMEOUT_MS = 8000;
 
 function isRunningInstalled() {
     if (!process.pkg) {
@@ -71,9 +71,11 @@ async function fetchLatestRelease() {
             headers: { Accept: 'application/vnd.github+json' },
         });
 
-        return response.ok ? await response.json() : null;
-    } catch (error) {
-        return null;
+        if (!response.ok) {
+            throw new Error(`GitHub API returned HTTP ${response.status}`);
+        }
+
+        return await response.json();
     } finally {
         clearTimeout(timeout);
     }
@@ -121,22 +123,38 @@ async function checkForUpdate() {
     }
 
     if (!(await shouldCheckNow())) {
+        await logMessage(`Info: Update check skipped (last checked less than ${settings.updateCheckIntervalMs / 3600000}h ago).${os.EOL}`);
         return;
     }
 
     await recordCheckTimestamp();
 
-    const release = await fetchLatestRelease();
-    if (!release || !release.tag_name || !isNewerVersion(release.tag_name, settings.appVersion)) {
+    let release;
+    try {
+        release = await fetchLatestRelease();
+    } catch (error) {
+        await logMessage(`Info: Update check failed: ${error.message}${os.EOL}`);
+        return;
+    }
+
+    if (!release || !release.tag_name) {
+        await logMessage(`Info: Update check returned no usable release information.${os.EOL}`);
+        return;
+    }
+
+    if (!isNewerVersion(release.tag_name, settings.appVersion)) {
+        await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`);
         return;
     }
 
     const asset = (release.assets || []).find((item) => item.name === settings.updateAssetName);
     if (!asset) {
+        await logMessage(`Info: Release ${release.tag_name} has no ${settings.updateAssetName} asset.${os.EOL}`);
         return;
     }
 
     const latestVersion = parseVersion(release.tag_name);
+    await logMessage(`Info: New version ${latestVersion} is available (current: ${settings.appVersion}).${os.EOL}`);
     console.log(
         consoleUi.paint(`A new version ${latestVersion} is available (current: ${settings.appVersion}).`, 'bold', 'cyan')
     );

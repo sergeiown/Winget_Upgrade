@@ -23,7 +23,6 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] The post-update relaunch no longer depends on a single attempt from the installer. It's now driven by a small detached helper that waits for the installer to finish, launches the app, checks whether it's actually running, and retries a few times with backoff before giving up - since the previous single-shot relaunch had failed silently (with nothing logged at all, not even a crash record) after at least two updates in a row.
 - [x] Discovery stats are now printed as an aligned, colored table instead of a single run-on line.
-- [x] Guarded against a silent crash-on-startup: an uncaught error now gets logged and the window stays open long enough to read it, instead of just vanishing.
-- [x] Added a short pause before the installer's post-update launch, to give antivirus real-time scanning a moment to clear the freshly written executable first.
 - [ ] Future plans are left to the future.

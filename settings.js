@@ -7,8 +7,8 @@ const os = require('os');
 const path = require('path');
 
 const settings = {
-    appVersion: '2.0.6',
-    wingetUpgradeVersion: 'Winget Upgrade 2.0.6',
+    appVersion: '2.0.7',
+    wingetUpgradeVersion: 'Winget Upgrade 2.0.7',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(process.cwd(), 'winget_upgrade.log'),
@@ -17,8 +17,8 @@ const settings = {
     githubReleasesApiUrl: 'https://api.github.com/repos/sergeiown/Winget_Upgrade/releases/latest',
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,
-    preUpgradePauseMs: 3000,
-    stepPauseMs: 2000,
+    preUpgradePauseMs: 5000,
+    stepPauseMs: 3500,
     wingetArgs: {
         upgradeList: ['upgrade', '--accept-source-agreements', '--disable-interactivity', '--ignore-warnings'],
         upgrade: [

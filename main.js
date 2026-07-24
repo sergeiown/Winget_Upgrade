@@ -3,7 +3,6 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-const fs = require('fs').promises;
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -12,8 +11,7 @@ const {
     waitForKeyPressAndExit,
     logMessage,
     checkAndTrimLogFile,
-    executeAndLog,
-    getFilteredPackages,
+    discoverUpgradablePackages,
     upgradePackage,
 } = require('./utils');
 const settings = require('./settings');
@@ -67,45 +65,44 @@ async function tryToPerformUpgrade() {
 
         const wingetLocation = stdout.trim();
 
-        const exportCommand = `${wingetLocation} ${settings.wingetArgs.export.join(' ')}`;
-        await executeAndLog(exportCommand, settings.logFilePath, async () => {
-            const packages = await getFilteredPackages(settings.ignoreFilePath, settings.listFilePath);
-            const results = [];
-            const overallStartedAt = Date.now();
+        const packages = await discoverUpgradablePackages(wingetLocation, settings.ignoreFilePath);
 
-            for (let index = 0; index < packages.length; index++) {
-                const pkg = packages[index];
+        consoleUi.printDiscoveredPackages(packages);
+        await new Promise((resolve) => setTimeout(resolve, settings.preUpgradePauseMs));
 
-                consoleUi.printPackageHeader(index + 1, packages.length, pkg.id);
+        const results = [];
+        const overallStartedAt = Date.now();
 
-                const renderProgress = consoleUi.createProgressRenderer();
-                const result = await upgradePackage(wingetLocation, pkg, settings.logFilePath, renderProgress);
+        for (let index = 0; index < packages.length; index++) {
+            const pkg = packages[index];
 
-                consoleUi.clearProgressLine();
-                consoleUi.printPackageResult(result);
-                results.push(result);
-            }
+            consoleUi.printPackageHeader(index + 1, packages.length, pkg.id);
 
-            await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
+            const renderProgress = consoleUi.createProgressRenderer();
+            const result = await upgradePackage(wingetLocation, pkg, settings.logFilePath, renderProgress);
 
-            await fs.unlink(settings.listFilePath);
+            consoleUi.clearProgressLine();
+            consoleUi.printPackageResult(result);
+            results.push(result);
+        }
 
-            try {
-                await logMessage(settings.finalLogMessage);
+        await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
 
-                consoleUi.printSummaryTable(results, Date.now() - overallStartedAt);
-                console.log(settings.finalMessage);
+        try {
+            await logMessage(settings.finalLogMessage);
 
-                await Promise.race([
-                    waitForKeyPressAndExit(0),
-                    new Promise((resolve) => setTimeout(resolve, 10000)),
-                ]);
+            consoleUi.printSummaryTable(results, Date.now() - overallStartedAt);
+            console.log(settings.finalMessage);
 
-                process.exit(0);
-            } catch (error) {
-                console.error(`An error occurred:`, error);
-            }
-        });
+            await Promise.race([
+                waitForKeyPressAndExit(0),
+                new Promise((resolve) => setTimeout(resolve, 10000)),
+            ]);
+
+            process.exit(0);
+        } catch (error) {
+            console.error(`An error occurred:`, error);
+        }
     } catch (error) {
         if (error.message.includes(`Winget is not installed.`)) {
             await logMessage(`Error: winget is not installed on this system.${os.EOL}`);

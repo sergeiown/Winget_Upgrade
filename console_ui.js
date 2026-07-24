@@ -59,6 +59,20 @@ function createProgressRenderer() {
     };
 }
 
+function printDiscoveredPackages(packages) {
+    console.clear();
+
+    if (packages.length === 0) {
+        console.log(paint('No updates found - everything is up to date.', 'green'));
+        console.log();
+        return;
+    }
+
+    console.log(paint(`Found ${packages.length} package(s) to update:`, 'bold', 'cyan'));
+    packages.forEach((pkg) => console.log(`  - ${pkg.id}`));
+    console.log();
+}
+
 function printPackageHeader(index, total, id) {
     console.clear();
     console.log(paint(`[${index}/${total}] Upgrading: ${id}`, 'bold', 'cyan'));
@@ -104,6 +118,7 @@ module.exports = {
     renderProgressLine,
     clearProgressLine,
     createProgressRenderer,
+    printDiscoveredPackages,
     printPackageHeader,
     printPackageResult,
     printSummaryTable,

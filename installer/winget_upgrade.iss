@@ -44,9 +44,11 @@ Name: "autostart"; Description: "{cm:AutoStartTaskDescription}"; GroupDescriptio
 
 [Files]
 Source: "..\winget_upgrade.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\winget_ignore.txt"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+Name: "{group}\Ignore list"; Filename: "{app}\winget_ignore.txt"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: autostart
 

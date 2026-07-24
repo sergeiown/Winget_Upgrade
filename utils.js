@@ -1,4 +1,4 @@
-/* Copyright (c) 2024 Serhii I. Myshko
+/* Copyright (c) 2024-2026 Serhii I. Myshko
 https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
@@ -41,6 +41,17 @@ async function logMessage(message) {
     console.log(message);
 }
 
+function isLoggableLine(line) {
+    return (
+        line.length > 0 &&
+        !/[░▒█]/.test(line) &&
+        /[a-zA-Zа-яА-Я0-9]/.test(line) &&
+        !line.includes('Found an existing package already installed.') &&
+        !line.includes('No available upgrade found.') &&
+        !line.includes('No newer package versions are available from the configured sources.')
+    );
+}
+
 async function executeAndLog(command, logFilePath, callback) {
     try {
         const childProcess = exec(command);
@@ -50,13 +61,7 @@ async function executeAndLog(command, logFilePath, callback) {
             const lines = data.toString().split(os.EOL);
             lines.forEach((line) => {
                 const trimmedLine = line.trim();
-                if (
-                    !/[░▒█]/.test(trimmedLine) &&
-                    /[a-zA-Zа-яА-Я0-9]/.test(trimmedLine) &&
-                    !trimmedLine.includes('Found an existing package already installed.') &&
-                    !trimmedLine.includes('No available upgrade found.') &&
-                    !trimmedLine.includes('No newer package versions are available from the configured sources.')
-                ) {
+                if (isLoggableLine(trimmedLine)) {
                     logStream.write(trimmedLine + os.EOL);
                 }
             });
@@ -79,50 +84,141 @@ async function executeAndLog(command, logFilePath, callback) {
     }
 }
 
-async function filterIgnoredPackages(ignoreFilePath, listFilePath) {
+const DEFAULT_IGNORE_TEMPLATE =
+    `# Winget Upgrade - ignore list${os.EOL}` +
+    `# Add one entry per line. An entry can be the full package identifier${os.EOL}` +
+    `# or just part of its name/id - matching is case-insensitive, e.g.:${os.EOL}` +
+    `#${os.EOL}` +
+    `# 7zip${os.EOL}` +
+    `# Google.Chrome${os.EOL}` +
+    `#${os.EOL}` +
+    `# Lines starting with "#" are comments and are ignored.${os.EOL}`;
+
+async function migrateLegacyIgnoreFile(ignoreFilePath, legacyIgnoreFilePath) {
     try {
-        let ignoreData = { Packages: [{ name: 'REPLACE_WITH_PACKAGE_NAME' }, { name: 'REPLACE_WITH_PACKAGE_NAME' }] };
+        const data = await fs.readFile(legacyIgnoreFilePath, 'utf-8');
+        const parsed = JSON.parse(data);
+        const names = (parsed.Packages || [])
+            .map((pkg) => pkg.name)
+            .filter((name) => name && name !== 'REPLACE_WITH_PACKAGE_NAME');
 
-        try {
-            const data = await fs.readFile(ignoreFilePath, 'utf-8');
-            ignoreData = JSON.parse(data);
+        const migratedContent = DEFAULT_IGNORE_TEMPLATE + os.EOL + names.join(os.EOL) + (names.length ? os.EOL : '');
+        await fs.writeFile(ignoreFilePath, migratedContent);
+        await fs.rename(legacyIgnoreFilePath, `${legacyIgnoreFilePath}.bak`);
 
-            const ignoreStatusMessage = `Ignore list successfully applied.`;
-            logMessage(`${ignoreStatusMessage}${os.EOL}`);
-        } catch (error) {
-            await fs.writeFile(ignoreFilePath, JSON.stringify(ignoreData, null, 2));
-            const message = `Info: Created new ignore list template at ${ignoreFilePath}`;
-            logMessage(`${message}${os.EOL}`);
+        await logMessage(`Info: Migrated legacy ignore list to ${ignoreFilePath}${os.EOL}`);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function loadIgnoreList(ignoreFilePath) {
+    let content;
+
+    try {
+        content = await fs.readFile(ignoreFilePath, 'utf-8');
+        await logMessage(`Ignore list successfully applied.${os.EOL}`);
+    } catch (error) {
+        const migrated = await migrateLegacyIgnoreFile(ignoreFilePath, settings.legacyIgnoreFilePath);
+
+        if (migrated) {
+            content = await fs.readFile(ignoreFilePath, 'utf-8');
+        } else {
+            await fs.writeFile(ignoreFilePath, DEFAULT_IGNORE_TEMPLATE);
+            await logMessage(`Info: Created new ignore list template at ${ignoreFilePath}${os.EOL}`);
+            content = DEFAULT_IGNORE_TEMPLATE;
         }
+    }
 
-        const listData = JSON.parse(await fs.readFile(listFilePath, 'utf-8'));
-        const removedPackages = [];
+    return content
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0 && !line.startsWith('#'));
+}
 
-        listData.Sources.forEach((source) => {
-            source.Packages = source.Packages.filter((pkg) => {
-                const isIgnored = ignoreData.Packages.some((ignorePkg) =>
-                    pkg.PackageIdentifier.includes(ignorePkg.name)
-                );
+async function getFilteredPackages(ignoreFilePath, listFilePath) {
+    const ignoreEntries = await loadIgnoreList(ignoreFilePath);
+    const listData = JSON.parse(await fs.readFile(listFilePath, 'utf-8'));
+    const removedPackages = [];
+    const packages = [];
 
-                if (isIgnored) {
-                    removedPackages.push(pkg.PackageIdentifier);
+    listData.Sources.forEach((source) => {
+        source.Packages.forEach((pkg) => {
+            const isIgnored = ignoreEntries.some((entry) =>
+                pkg.PackageIdentifier.toLowerCase().includes(entry.toLowerCase())
+            );
+
+            if (isIgnored) {
+                removedPackages.push(pkg.PackageIdentifier);
+            } else {
+                packages.push({ id: pkg.PackageIdentifier, source: source.SourceDetails.Name });
+            }
+        });
+    });
+
+    const removalMessages =
+        removedPackages.length > 0
+            ? removedPackages.map((id) => `Package is ignored: ${id}${os.EOL}`).join('')
+            : `Ignore list does not contain any packages.${os.EOL}`;
+
+    await logMessage(removalMessages);
+
+    return packages;
+}
+
+function classifyExitCode(code) {
+    const normalized = (code ?? -1) >>> 0;
+
+    if (normalized === settings.wingetExitCodes.SUCCESS) {
+        return 'updated';
+    }
+    if (normalized === settings.wingetExitCodes.NO_APPLICABLE_UPDATE) {
+        return 'no-update';
+    }
+    return 'failed';
+}
+
+function parseProgressPercent(text) {
+    const match = text.match(/(\d{1,3})%/);
+    return match ? Math.min(100, parseInt(match[1], 10)) : null;
+}
+
+function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
+    const command = `${wingetLocation} ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
+    const startedAt = Date.now();
+    const logStream = createWriteStream(logFilePath, { flags: 'a' });
+
+    return new Promise((resolve) => {
+        const childProcess = exec(command);
+
+        childProcess.stdout.on('data', (data) => {
+            const text = data.toString();
+
+            text.split(os.EOL).forEach((line) => {
+                const trimmedLine = line.trim();
+                if (isLoggableLine(trimmedLine)) {
+                    logStream.write(trimmedLine + os.EOL);
                 }
-                return !isIgnored;
             });
+
+            const percent = parseProgressPercent(text);
+            if (percent !== null && onProgress) {
+                onProgress(percent);
+            }
         });
 
-        await fs.writeFile(listFilePath, JSON.stringify(listData, null, 2));
+        childProcess.stderr.pipe(logStream);
 
-        const removalMessages =
-            removedPackages.length > 0
-                ? removedPackages.map((packageList) => `Package is ignored: ${packageList}${os.EOL}`).join('')
-                : `Ignore list does not contain any packages.${os.EOL}`;
-
-        logMessage(removalMessages);
-    } catch (error) {
-        const errorMessage = `Failed to filter ignored packages: ${error.message}${os.EOL}`;
-        logMessage(errorMessage);
-    }
+        childProcess.on('exit', (code) => {
+            logStream.end();
+            resolve({
+                id: pkg.id,
+                status: classifyExitCode(code),
+                durationMs: Date.now() - startedAt,
+            });
+        });
+    });
 }
 
 async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
@@ -150,5 +246,6 @@ module.exports = {
     logMessage,
     executeAndLog,
     checkAndTrimLogFile,
-    filterIgnoredPackages,
+    getFilteredPackages,
+    upgradePackage,
 };

@@ -1,0 +1,8 @@
+# Winget Upgrade - ignore list
+# Add one entry per line. An entry can be the full package identifier
+# or just part of its name/id - matching is case-insensitive, e.g.:
+#
+# 7zip
+# Google.Chrome
+#
+# Lines starting with "#" are comments and are ignored.

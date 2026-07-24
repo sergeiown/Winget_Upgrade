@@ -1,4 +1,4 @@
-/* Copyright (c) 2024 Serhii I. Myshko
+/* Copyright (c) 2024-2026 Serhii I. Myshko
 https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
@@ -13,9 +13,12 @@ const {
     logMessage,
     checkAndTrimLogFile,
     executeAndLog,
-    filterIgnoredPackages,
+    getFilteredPackages,
+    upgradePackage,
 } = require('./utils');
 const settings = require('./settings');
+const consoleUi = require('./console_ui');
+const { checkForUpdate } = require('./updater');
 
 const execAsync = promisify(exec);
 
@@ -50,6 +53,8 @@ async function tryToPerformUpgrade() {
 
     await setConsoleTitle(settings.wingetUpgradeVersion);
 
+    await checkForUpdate();
+
     try {
         const { stdout } = await execAsync(settings.wingetPath);
 
@@ -64,29 +69,42 @@ async function tryToPerformUpgrade() {
 
         const exportCommand = `${wingetLocation} ${settings.wingetArgs.export.join(' ')}`;
         await executeAndLog(exportCommand, settings.logFilePath, async () => {
-            await filterIgnoredPackages(settings.ignoreFilePath, settings.listFilePath);
+            const packages = await getFilteredPackages(settings.ignoreFilePath, settings.listFilePath);
+            const results = [];
+            const overallStartedAt = Date.now();
 
-            const importCommand = `${wingetLocation} ${settings.wingetArgs.import.join(' ')}`;
-            await executeAndLog(importCommand, settings.logFilePath, async () => {
-                await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
+            for (let index = 0; index < packages.length; index++) {
+                const pkg = packages[index];
 
-                await fs.unlink(settings.listFilePath);
+                consoleUi.printPackageHeader(index + 1, packages.length, pkg.id);
 
-                try {
-                    await logMessage(settings.finalLogMessage);
+                const renderProgress = consoleUi.createProgressRenderer();
+                const result = await upgradePackage(wingetLocation, pkg, settings.logFilePath, renderProgress);
 
-                    console.log(settings.finalMessage);
+                consoleUi.clearProgressLine();
+                consoleUi.printPackageResult(result);
+                results.push(result);
+            }
 
-                    await Promise.race([
-                        waitForKeyPressAndExit(0),
-                        new Promise((resolve) => setTimeout(resolve, 10000)),
-                    ]);
+            await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
 
-                    process.exit(0);
-                } catch (error) {
-                    console.error(`An error occurred:`, error);
-                }
-            });
+            await fs.unlink(settings.listFilePath);
+
+            try {
+                await logMessage(settings.finalLogMessage);
+
+                consoleUi.printSummaryTable(results, Date.now() - overallStartedAt);
+                console.log(settings.finalMessage);
+
+                await Promise.race([
+                    waitForKeyPressAndExit(0),
+                    new Promise((resolve) => setTimeout(resolve, 10000)),
+                ]);
+
+                process.exit(0);
+            } catch (error) {
+                console.error(`An error occurred:`, error);
+            }
         });
     } catch (error) {
         if (error.message.includes(`Winget is not installed.`)) {

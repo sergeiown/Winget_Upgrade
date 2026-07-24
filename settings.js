@@ -1,4 +1,4 @@
-/* Copyright (c) 2024 Serhii I. Myshko
+/* Copyright (c) 2024-2026 Serhii I. Myshko
 https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
@@ -8,12 +8,18 @@ const path = require('path');
 const documentsPath = path.join(os.homedir(), 'Documents');
 
 const settings = {
-    wingetUpgradeVersion: 'Winget Upgrade 1.3',
+    appVersion: '2.0',
+    wingetUpgradeVersion: 'Winget Upgrade 2.0',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(documentsPath, 'winget_upgrade.log'),
     listFilePath: path.join(process.cwd(), 'winget_list.json'),
-    ignoreFilePath: path.join(process.cwd(), 'winget_ignore.json'),
+    ignoreFilePath: path.join(process.cwd(), 'winget_ignore.txt'),
+    legacyIgnoreFilePath: path.join(process.cwd(), 'winget_ignore.json'),
+    updateStateFilePath: path.join(documentsPath, 'winget_upgrade_update_state.json'),
+    updateCheckIntervalMs: 24 * 60 * 60 * 1000,
+    githubReleasesApiUrl: 'https://api.github.com/repos/sergeiown/Winget_Upgrade/releases/latest',
+    updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,
     wingetArgs: {
         export: [
@@ -23,15 +29,19 @@ const settings = {
             '--disable-interactivity',
             '--accept-source-agreements',
         ],
-        import: [
-            'import',
-            'winget_list.json',
-            '--ignore-versions',
+        upgrade: [
+            'upgrade',
+            '--exact',
+            '--silent',
             '--accept-package-agreements',
             '--accept-source-agreements',
             '--disable-interactivity',
             '--ignore-warnings',
         ],
+    },
+    wingetExitCodes: {
+        SUCCESS: 0,
+        NO_APPLICABLE_UPDATE: 0x8a15002b,
     },
     date: new Date()
         .toLocaleString('uk-UA', {

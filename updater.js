@@ -24,19 +24,6 @@ function isRunningInstalled() {
     return fs.existsSync(path.join(installDir, 'unins000.exe'));
 }
 
-async function shouldCheckNow() {
-    try {
-        const state = JSON.parse(await fsp.readFile(settings.updateStateFilePath, 'utf-8'));
-        return Date.now() - state.lastCheckedAt >= settings.updateCheckIntervalMs;
-    } catch (error) {
-        return true;
-    }
-}
-
-async function recordCheckTimestamp() {
-    await fsp.writeFile(settings.updateStateFilePath, JSON.stringify({ lastCheckedAt: Date.now() }));
-}
-
 function parseVersion(value) {
     return value.replace(/^v/i, '').trim();
 }
@@ -122,42 +109,41 @@ async function checkForUpdate() {
         return;
     }
 
-    if (!(await shouldCheckNow())) {
-        await logMessage(`Info: Update check skipped (last checked less than ${settings.updateCheckIntervalMs / 3600000}h ago).${os.EOL}`);
-        return;
-    }
-
-    await recordCheckTimestamp();
+    const spinner = consoleUi.createSpinner('Checking for updates...').start();
 
     let release;
     try {
         release = await fetchLatestRelease();
     } catch (error) {
+        spinner.stop(consoleUi.paint('Update check failed - continuing with the current version.', 'yellow'));
         await logMessage(`Info: Update check failed: ${error.message}${os.EOL}`);
         return;
     }
 
     if (!release || !release.tag_name) {
+        spinner.stop(consoleUi.paint('Update check returned no usable release information.', 'yellow'));
         await logMessage(`Info: Update check returned no usable release information.${os.EOL}`);
         return;
     }
 
     if (!isNewerVersion(release.tag_name, settings.appVersion)) {
+        spinner.stop(consoleUi.paint(`You're on the latest version (${settings.appVersion}).`, 'green'));
         await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`);
         return;
     }
 
     const asset = (release.assets || []).find((item) => item.name === settings.updateAssetName);
     if (!asset) {
+        spinner.stop(consoleUi.paint(`Release ${release.tag_name} has no installer asset - skipping update.`, 'yellow'));
         await logMessage(`Info: Release ${release.tag_name} has no ${settings.updateAssetName} asset.${os.EOL}`);
         return;
     }
 
     const latestVersion = parseVersion(release.tag_name);
-    await logMessage(`Info: New version ${latestVersion} is available (current: ${settings.appVersion}).${os.EOL}`);
-    console.log(
+    spinner.stop(
         consoleUi.paint(`A new version ${latestVersion} is available (current: ${settings.appVersion}).`, 'bold', 'cyan')
     );
+    await logMessage(`Info: New version ${latestVersion} is available (current: ${settings.appVersion}).${os.EOL}`);
 
     const confirmed = await promptYesNo('Update now? [Y/n] ');
     if (!confirmed) {

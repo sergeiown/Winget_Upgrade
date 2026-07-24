@@ -2,10 +2,11 @@
 ; https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE
 
 #define MyAppName "Winget Upgrade"
-#define MyAppVersion "2.0.2"
+#define MyAppVersion "2.0.3"
 #define MyAppPublisher "Serhii I. Myshko"
 #define MyAppURL "https://github.com/sergeiown/Winget_Upgrade"
 #define MyAppExeName "winget_upgrade.exe"
+#define MyAppIcon "..\sagittarius.ico"
 
 [Setup]
 AppId={{2A6E7B1E-6C2E-4F3E-9C7B-3B7C6A9E2D41}
@@ -26,6 +27,7 @@ OutputBaseFilename=WingetUpgradeSetup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile={#MyAppIcon}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 SignTool=mysign
 
@@ -45,10 +47,12 @@ Name: "autostart"; Description: "{cm:AutoStartTaskDescription}"; GroupDescriptio
 [Files]
 Source: "..\winget_upgrade.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\winget_ignore.txt"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "..\winget_upgrade.log"; DestDir: "{app}"; Flags: onlyifdoesntexist
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 Name: "{group}\Ignore list"; Filename: "{app}\winget_ignore.txt"; WorkingDir: "{app}"
+Name: "{group}\Log file"; Filename: "{app}\winget_upgrade.log"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: autostart
 

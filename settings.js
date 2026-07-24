@@ -5,18 +5,15 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 const os = require('os');
 const path = require('path');
-const documentsPath = path.join(os.homedir(), 'Documents');
 
 const settings = {
-    appVersion: '2.0.2',
-    wingetUpgradeVersion: 'Winget Upgrade 2.0.2',
+    appVersion: '2.0.3',
+    wingetUpgradeVersion: 'Winget Upgrade 2.0.3',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
-    logFilePath: path.join(documentsPath, 'winget_upgrade.log'),
+    logFilePath: path.join(process.cwd(), 'winget_upgrade.log'),
     ignoreFilePath: path.join(process.cwd(), 'winget_ignore.txt'),
     legacyIgnoreFilePath: path.join(process.cwd(), 'winget_ignore.json'),
-    updateStateFilePath: path.join(documentsPath, 'winget_upgrade_update_state.json'),
-    updateCheckIntervalMs: 24 * 60 * 60 * 1000,
     githubReleasesApiUrl: 'https://api.github.com/repos/sergeiown/Winget_Upgrade/releases/latest',
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,

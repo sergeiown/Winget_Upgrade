@@ -59,6 +59,44 @@ function createProgressRenderer() {
     };
 }
 
+const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+function createSpinner(text) {
+    let frameIndex = 0;
+    let timer = null;
+
+    function render() {
+        process.stdout.write(`\r${paint(spinnerFrames[frameIndex], 'cyan')} ${text}`);
+        frameIndex = (frameIndex + 1) % spinnerFrames.length;
+    }
+
+    function clearLine() {
+        process.stdout.write(`\r${' '.repeat(text.length + 4)}\r`);
+    }
+
+    return {
+        start() {
+            if (!isColorEnabled) {
+                console.log(`${text}...`);
+                return this;
+            }
+            render();
+            timer = setInterval(render, 100);
+            return this;
+        },
+        stop(finalLine) {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+                clearLine();
+            }
+            if (finalLine) {
+                console.log(finalLine);
+            }
+        },
+    };
+}
+
 function printDiscoveredPackages(packages) {
     console.clear();
 
@@ -118,6 +156,7 @@ module.exports = {
     renderProgressLine,
     clearProgressLine,
     createProgressRenderer,
+    createSpinner,
     printDiscoveredPackages,
     printPackageHeader,
     printPackageResult,

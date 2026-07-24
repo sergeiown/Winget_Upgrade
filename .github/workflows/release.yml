@@ -37,6 +37,18 @@ jobs:
           $bytes = [Convert]::FromBase64String($env:CERT_BASE64)
           [IO.File]::WriteAllBytes('certificate.pfx', $bytes)
 
+      - name: Locate signtool
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -like "*x64*" } |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1
+          if (-not $signtool) {
+              throw "signtool.exe not found under Windows Kits"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value $signtool.Directory
+
       - name: Sign executable
         shell: cmd
         env:

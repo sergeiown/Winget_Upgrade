@@ -23,7 +23,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] **Critical fix**: the previous two releases failed to start at all (`Pkg: Error reading from file.`). The `rcedit` step added to embed a custom application icon was corrupting the bundle `pkg` embeds in the executable. The icon step has been removed from the build until a safe way to apply it is found.
 - [x] Fixed a crash on exit when the console doesn't support raw keyboard input (`process.stdin.setRawMode`), which could close the window right after the summary instead of pausing.
 - [x] The "run at sign-in" installer task is now checked by default on every install, including upgrades over a previous version (it used to reset to unchecked on upgrades).
-- [x] Removed the unused `sagittarius_1x1.png` source image now that the generated `.ico` is the only one the build needs.
 - [ ] Future plans are left to the future.

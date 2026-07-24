@@ -30,15 +30,6 @@ jobs:
       - name: Build executable
         run: pkg --compress Brotli --target node18-win-x64 --output winget_upgrade.exe main.js
 
-      - name: Install rcedit
-        run: npm install -g rcedit
-
-      - name: Embed application icon
-        shell: pwsh
-        run: |
-          $rcedit = Join-Path (npm root -g) 'rcedit/bin/rcedit-x64.exe'
-          & $rcedit winget_upgrade.exe --set-icon sagittarius.ico
-
       - name: Decode code-signing certificate
         shell: pwsh
         env:

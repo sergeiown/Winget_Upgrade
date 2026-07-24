@@ -21,6 +21,12 @@ async function setConsoleTitle(title) {
 }
 
 async function waitForKeyPressAndExit(exitCode) {
+    if (typeof process.stdin.setRawMode !== 'function' || !process.stdin.isTTY) {
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        process.exit(exitCode);
+        return;
+    }
+
     process.stdin.setRawMode(true);
     process.stdin.resume();
 

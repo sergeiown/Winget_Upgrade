@@ -23,7 +23,7 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] Auto-update now checks on every launch (no more 24-hour throttle) and shows an animated spinner plus a clear result either way, even when there's nothing to update.
-- [x] Log file moved next to the program instead of the user's Documents folder, and added to the Start Menu group.
-- [x] The installer now gives the program its own icon, and the Structure diagram in the readme is a rendered SVG instead of a Mermaid block that didn't render on GitHub.
+- [x] Fixed a crash on exit when the console doesn't support raw keyboard input (`process.stdin.setRawMode`), which could close the window right after the summary instead of pausing.
+- [x] The "run at sign-in" installer task is now checked by default on every install, including upgrades over a previous version (it used to reset to unchecked on upgrades).
+- [x] Removed the unused `sagittarius_1x1.png` source image now that the generated `.ico` is the only one the build needs.
 - [ ] Future plans are left to the future.

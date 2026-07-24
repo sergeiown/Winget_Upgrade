@@ -14,6 +14,7 @@ jobs:
     runs-on: windows-latest
     env:
       INNO_COMPILER: "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe"
+      CERT_PATH: ${{ github.workspace }}\certificate.pfx
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,7 +36,7 @@ jobs:
           CERT_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
         run: |
           $bytes = [Convert]::FromBase64String($env:CERT_BASE64)
-          [IO.File]::WriteAllBytes('certificate.pfx', $bytes)
+          [IO.File]::WriteAllBytes($env:CERT_PATH, $bytes)
 
       - name: Locate signtool
         shell: pwsh
@@ -53,7 +54,7 @@ jobs:
         shell: cmd
         env:
           CERT_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        run: signtool sign /f certificate.pfx /p "%CERT_PASSWORD%" /t http://timestamp.digicert.com /fd SHA256 winget_upgrade.exe
+        run: signtool sign /f "%CERT_PATH%" /p "%CERT_PASSWORD%" /t http://timestamp.digicert.com /fd SHA256 winget_upgrade.exe
 
       - name: Verify Inno Setup is available
         shell: pwsh
@@ -66,12 +67,12 @@ jobs:
         shell: cmd
         env:
           CERT_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        run: "\"%INNO_COMPILER%\" \"/Smysign=signtool.exe sign /f certificate.pfx /p %CERT_PASSWORD% /t http://timestamp.digicert.com /fd SHA256 $f\" installer\\winget_upgrade.iss"
+        run: "\"%INNO_COMPILER%\" \"/Smysign=signtool.exe sign /f %CERT_PATH% /p %CERT_PASSWORD% /t http://timestamp.digicert.com /fd SHA256 $f\" installer\\winget_upgrade.iss"
 
       - name: Remove certificate file
         if: always()
         shell: pwsh
-        run: Remove-Item -Force certificate.pfx -ErrorAction SilentlyContinue
+        run: Remove-Item -Force $env:CERT_PATH -ErrorAction SilentlyContinue
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2

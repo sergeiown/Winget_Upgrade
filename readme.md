@@ -83,16 +83,6 @@ In case of errors, the program displays the corresponding messages in the consol
 
 When the program is finished updating, it automatically exits to free up system resources.
 
-## Attached files
-
-- `main.js`: The main program file.
-- `utils.js`: Module for executing commands and logging events.
-- `settings.js`: A module that contains the necessary settings for executing commands and logging events.
-- `console_ui.js`: Module responsible for the colored console output, progress bar/ETA, and the final summary.
-- `updater.js`: Module that checks GitHub for newer releases and applies them.
-- `installer/winget_upgrade.iss`: Inno Setup script used to build the installer.
-- `build_installer.bat`: Local/manual fallback that builds and signs `winget_upgrade.exe`, then compiles and signs the installer.
-
 ## License
 
 [Copyright (c) 2024-2026 Serhii I. Myshko](https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE)

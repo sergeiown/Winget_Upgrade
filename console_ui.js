@@ -103,12 +103,19 @@ function printDiscoveredPackages(packages, meta = {}) {
     const { totalInstalled, upToDateCount, ignoredCount } = meta;
 
     if (typeof totalInstalled === 'number') {
-        console.log(
-            `${paint('Checked', 'bold', 'cyan')} ${paint(String(totalInstalled), 'bold', 'cyan')} ${paint('installed package(s):', 'bold', 'cyan')} ` +
-                `${paint(`${upToDateCount} up to date`, 'dim')}, ` +
-                `${paint(`${packages.length} to update`, packages.length > 0 ? 'green' : 'dim')}, ` +
-                `${paint(`${ignoredCount} ignored`, 'yellow')}`
-        );
+        const labelWidth = 14;
+        const rows = [
+            ['Installed:', totalInstalled, 'cyan'],
+            ['Up to date:', upToDateCount, 'dim'],
+            ['To update:', packages.length, packages.length > 0 ? 'green' : 'dim'],
+            ['Ignored:', ignoredCount, 'yellow'],
+        ];
+
+        console.log(paint('Discovery summary', 'bold', 'cyan'));
+        console.log(paint('-'.repeat('Discovery summary'.length), 'cyan'));
+        rows.forEach(([label, value, style]) => {
+            console.log(`${paint(label.padEnd(labelWidth), style)}${String(value).padStart(4)}`);
+        });
         console.log();
     }
 
@@ -118,7 +125,7 @@ function printDiscoveredPackages(packages, meta = {}) {
         return;
     }
 
-    console.log(paint(`Found ${packages.length} package(s) to update:`, 'bold', 'cyan'));
+    console.log(paint('Packages to update:', 'bold', 'cyan'));
     packages.forEach((pkg) => console.log(`  - ${pkg.id}`));
     console.log();
 }

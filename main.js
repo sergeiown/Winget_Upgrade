@@ -133,4 +133,14 @@ async function tryToPerformUpgrade() {
     }
 }
 
-tryToPerformUpgrade();
+tryToPerformUpgrade().catch(async (error) => {
+    try {
+        await logMessage(`Fatal error: ${error && error.stack ? error.stack : error}${os.EOL}`);
+    } catch (loggingError) {
+        console.error(`Failed to log fatal error: ${loggingError}`);
+    }
+
+    console.error(`Fatal error:`, error);
+
+    await waitForKeyPressAndExit(1);
+});

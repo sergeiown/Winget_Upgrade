@@ -2,7 +2,7 @@
 ; https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE
 
 #define MyAppName "Winget Upgrade"
-#define MyAppVersion "2.0.8"
+#define MyAppVersion "2.0.9"
 #define MyAppPublisher "Serhii I. Myshko"
 #define MyAppURL "https://github.com/sergeiown/Winget_Upgrade"
 #define MyAppExeName "winget_upgrade.exe"
@@ -58,3 +58,12 @@ Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDi
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; WorkingDir: "{app}"; Flags: nowait postinstall
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  { Give antivirus real-time scanning a moment to clear the freshly written
+    executable before the postinstall [Run] entry tries to launch it. }
+  if CurStep = ssPostInstall then
+    Sleep(2000);
+end;

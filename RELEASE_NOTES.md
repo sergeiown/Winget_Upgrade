@@ -23,8 +23,7 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] The "no updates" case now reports real numbers instead of nothing: total installed packages, how many are up to date, how many need an update, and how many are ignored.
-- [x] Fixed a real bug behind those numbers: `winget list` and `winget upgrade` were being run at the same time, and winget doesn't tolerate two of its own processes running concurrently - one of them would fail outright. They now run one after the other.
-- [x] Auto-update no longer asks for confirmation - it downloads, installs, and restarts as soon as a newer release is found.
-- [x] Fixed the update install/restart itself: the app used to wait for the installer while still holding its own executable open, which could stop the file from actually being replaced. It now hands off to a fully detached installer and exits immediately, letting the installer relaunch the new version once it's done.
+- [x] Discovery stats are now printed as an aligned, colored table instead of a single run-on line.
+- [x] Guarded against a silent crash-on-startup: an uncaught error now gets logged and the window stays open long enough to read it, instead of just vanishing.
+- [x] Added a short pause before the installer's post-update launch, to give antivirus real-time scanning a moment to clear the freshly written executable first.
 - [ ] Future plans are left to the future.

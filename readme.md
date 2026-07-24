@@ -15,24 +15,7 @@ a useful tool for keeping your system up to date.
 
 ## Structure
 
-```mermaid
-flowchart TD
-    Main["main.js"] --> Updater["updater.js<br/>checkForUpdate"]
-    Updater -- "update installed" --> Relaunch["Relaunch updated app"]
-    Updater -- "no update / declined" --> Check["Check winget presence + version"]
-    Check --> Discover["utils.js<br/>discoverUpgradablePackages"]
-    Ignore[["winget_ignore.txt"]] --> Discover
-    Discover --> Show["console_ui.js<br/>printDiscoveredPackages + pause"]
-    Show --> Loop["utils.js<br/>upgradePackage (per package)"]
-    Loop --> Progress["console_ui.js<br/>progress bar / ETA"]
-    Loop --> Log[("winget_upgrade.log")]
-    Loop --> Summary["console_ui.js<br/>printSummaryTable"]
-
-    Settings["settings.js"]-.paths & args.->Main
-    Settings-.paths & args.->Updater
-    Settings-.paths & args.->Discover
-    Settings-.paths & args.->Loop
-```
+![Module flow diagram](docs/structure.svg)
 
 ## Functionality
 
@@ -56,7 +39,7 @@ The program keeps a log of events in the file `winget_upgrade.log`, which stores
 - Errors.
 - Other events related to the upgrade process.
 
-The log file `winget_upgrade.log` is stored in the folder `%USERPROFILE%\documents\`.
+The log file `winget_upgrade.log` is stored next to the program itself, and is also reachable from the Start Menu group.
 
 ### 5. Limiting the size of the log
 The log is automatically truncated if its size exceeds 256 KB to avoid file overflow.
@@ -76,7 +59,7 @@ If an older `winget_ignore.json` from a previous version is found, its entries a
 The program logs which packages were ignored, one per line, in both the console and the log file.
 
 ### 7. Automatic updates
-On every launch (at most once every 24 hours), the program checks GitHub for a newer release. If one is found, it asks for confirmation before downloading and silently installing it, then restarts automatically. Declining simply skips the update and continues with the regular upgrade process.
+On every launch, the program checks GitHub for a newer release (with a short animated "Checking for updates..." indicator). If one is found, it asks for confirmation before downloading and silently installing it, then restarts automatically. Declining, or already being on the latest version, simply continues with the regular upgrade process.
 
 ## System requirements
 
@@ -89,7 +72,7 @@ Download `WingetUpgradeSetup.exe` from the [release](https://github.com/sergeiow
 
 1. The installer runs for the current user only - no administrator rights are required.
 2. During installation you can leave the "Start Winget Upgrade automatically when I sign in" task checked (enabled by default) to have it run at every sign-in, or uncheck it if you'd rather launch it manually.
-3. The Start Menu group also includes a shortcut straight to the ignore list (`winget_ignore.txt`) for quick editing.
+3. The Start Menu group also includes shortcuts straight to the ignore list (`winget_ignore.txt`) and the log file (`winget_upgrade.log`) for quick access.
 4. Once installed, the program can be removed at any time from "Apps & features" ("Programs and Features").
 
 ## Error messages

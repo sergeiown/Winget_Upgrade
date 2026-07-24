@@ -1,0 +1,70 @@
+name: Build and release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      INNO_COMPILER: "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install pkg
+        run: npm install -g pkg
+
+      - name: Build executable
+        run: pkg --compress Brotli --target node18-win-x64 --output winget_upgrade.exe main.js
+
+      - name: Decode code-signing certificate
+        shell: pwsh
+        env:
+          CERT_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+        run: |
+          $bytes = [Convert]::FromBase64String($env:CERT_BASE64)
+          [IO.File]::WriteAllBytes('certificate.pfx', $bytes)
+
+      - name: Sign executable
+        shell: cmd
+        env:
+          CERT_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: signtool sign /f certificate.pfx /p "%CERT_PASSWORD%" /t http://timestamp.digicert.com /fd SHA256 winget_upgrade.exe
+
+      - name: Verify Inno Setup is available
+        shell: pwsh
+        run: |
+          if (-not (Test-Path $env:INNO_COMPILER)) {
+              throw "Inno Setup compiler not found at $env:INNO_COMPILER"
+          }
+
+      - name: Build installer
+        shell: cmd
+        env:
+          CERT_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: "\"%INNO_COMPILER%\" \"/Smysign=signtool.exe sign /f certificate.pfx /p %CERT_PASSWORD% /t http://timestamp.digicert.com /fd SHA256 $f\" installer\\winget_upgrade.iss"
+
+      - name: Remove certificate file
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Force certificate.pfx -ErrorAction SilentlyContinue
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            winget_upgrade.exe
+            dist/WingetUpgradeSetup.exe

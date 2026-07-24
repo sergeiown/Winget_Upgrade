@@ -52,38 +52,6 @@ function isLoggableLine(line) {
     );
 }
 
-async function executeAndLog(command, logFilePath, callback) {
-    try {
-        const childProcess = exec(command);
-        const logStream = createWriteStream(logFilePath, { flags: 'a' });
-
-        childProcess.stdout.on('data', (data) => {
-            const lines = data.toString().split(os.EOL);
-            lines.forEach((line) => {
-                const trimmedLine = line.trim();
-                if (isLoggableLine(trimmedLine)) {
-                    logStream.write(trimmedLine + os.EOL);
-                }
-            });
-        });
-
-        childProcess.stderr.on('data', (data) => {
-            console.error(`Error: ${data}`);
-            logStream.end();
-        });
-
-        childProcess.stderr.pipe(logStream);
-        childProcess.stdout.pipe(process.stdout);
-        childProcess.stderr.pipe(process.stderr);
-
-        await new Promise((resolve) => childProcess.on('exit', resolve));
-        logStream.end();
-        callback(logFilePath);
-    } catch (error) {
-        console.error(`Execution failed: ${error}`);
-    }
-}
-
 const DEFAULT_IGNORE_TEMPLATE =
     `# Winget Upgrade - ignore list${os.EOL}` +
     `# Add one entry per line. An entry can be the full package identifier${os.EOL}` +
@@ -137,24 +105,56 @@ async function loadIgnoreList(ignoreFilePath) {
         .filter((line) => line.length > 0 && !line.startsWith('#'));
 }
 
-async function getFilteredPackages(ignoreFilePath, listFilePath) {
-    const ignoreEntries = await loadIgnoreList(ignoreFilePath);
-    const listData = JSON.parse(await fs.readFile(listFilePath, 'utf-8'));
-    const removedPackages = [];
+function parseUpgradeTable(output) {
+    const lines = output.split(/\r?\n/);
+    const headerIndex = lines.findIndex((line) => /\bId\b/.test(line) && /\bVersion\b/.test(line) && /\bAvailable\b/.test(line));
+
+    if (headerIndex === -1) {
+        return [];
+    }
+
+    const header = lines[headerIndex];
+    const idStart = header.indexOf('Id');
+    const versionStart = header.indexOf('Version');
+    const sourceStart = header.indexOf('Source');
     const packages = [];
 
-    listData.Sources.forEach((source) => {
-        source.Packages.forEach((pkg) => {
-            const isIgnored = ignoreEntries.some((entry) =>
-                pkg.PackageIdentifier.toLowerCase().includes(entry.toLowerCase())
-            );
+    for (let index = headerIndex + 2; index < lines.length; index++) {
+        const line = lines[index];
 
-            if (isIgnored) {
-                removedPackages.push(pkg.PackageIdentifier);
-            } else {
-                packages.push({ id: pkg.PackageIdentifier, source: source.SourceDetails.Name });
-            }
-        });
+        if (!line.trim() || /^-+$/.test(line) || /^\d+ upgrades? available\.?$/i.test(line)) {
+            continue;
+        }
+        if (line.length < idStart) {
+            break;
+        }
+
+        const id = line.substring(idStart, versionStart).trim();
+        const source = sourceStart >= 0 ? line.substring(sourceStart).trim() : 'winget';
+
+        if (id) {
+            packages.push({ id, source: source || 'winget' });
+        }
+    }
+
+    return packages;
+}
+
+async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
+    const command = `${wingetLocation} ${settings.wingetArgs.upgradeList.join(' ')}`;
+    const { stdout } = await execAsync(command);
+
+    const upgradable = parseUpgradeTable(stdout);
+    const ignoreEntries = await loadIgnoreList(ignoreFilePath);
+    const removedPackages = [];
+
+    const packages = upgradable.filter((pkg) => {
+        const isIgnored = ignoreEntries.some((entry) => pkg.id.toLowerCase().includes(entry.toLowerCase()));
+
+        if (isIgnored) {
+            removedPackages.push(pkg.id);
+        }
+        return !isIgnored;
     });
 
     const removalMessages =
@@ -244,8 +244,7 @@ module.exports = {
     setConsoleTitle,
     waitForKeyPressAndExit,
     logMessage,
-    executeAndLog,
     checkAndTrimLogFile,
-    getFilteredPackages,
+    discoverUpgradablePackages,
     upgradePackage,
 };

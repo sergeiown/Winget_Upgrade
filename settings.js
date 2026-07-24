@@ -13,7 +13,6 @@ const settings = {
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(documentsPath, 'winget_upgrade.log'),
-    listFilePath: path.join(process.cwd(), 'winget_list.json'),
     ignoreFilePath: path.join(process.cwd(), 'winget_ignore.txt'),
     legacyIgnoreFilePath: path.join(process.cwd(), 'winget_ignore.json'),
     updateStateFilePath: path.join(documentsPath, 'winget_upgrade_update_state.json'),
@@ -21,18 +20,12 @@ const settings = {
     githubReleasesApiUrl: 'https://api.github.com/repos/sergeiown/Winget_Upgrade/releases/latest',
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,
+    preUpgradePauseMs: 3000,
     wingetArgs: {
-        export: [
-            'export',
-            'winget_list.json',
-            '--ignore-warnings',
-            '--disable-interactivity',
-            '--accept-source-agreements',
-        ],
+        upgradeList: ['upgrade', '--accept-source-agreements', '--disable-interactivity', '--ignore-warnings'],
         upgrade: [
             'upgrade',
             '--exact',
-            '--silent',
             '--accept-package-agreements',
             '--accept-source-agreements',
             '--disable-interactivity',

@@ -101,7 +101,11 @@ async function tryToPerformUpgrade() {
         try {
             await logMessage(settings.finalLogMessage);
 
-            consoleUi.printSummaryTable(results, Date.now() - overallStartedAt);
+            if (results.length > 0) {
+                consoleUi.printSummaryTable(results, Date.now() - overallStartedAt);
+                await delay(settings.stepPauseMs);
+            }
+
             console.log(settings.finalMessage);
 
             await Promise.race([

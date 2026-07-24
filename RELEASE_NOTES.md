@@ -13,7 +13,7 @@
 
 - **Installer & Autostart**: A signed, per-user Inno Setup installer (no administrator rights needed) with an "run at sign-in" task enabled by default, and Start Menu shortcuts to the app, the ignore list, and the log file.
 
-- **Automatic Updates**: Checks GitHub for a newer release on every launch (with an animated "Checking for updates..." indicator), asks for confirmation, then downloads, installs and restarts silently.
+- **Automatic Updates**: Checks GitHub for a newer release on every launch (with an animated "Checking for updates..." indicator) and, if one is found, downloads, installs and restarts automatically - no confirmation needed.
 
 - **Logging**: Records upgrade events and errors in a `winget_upgrade.log` file kept next to the program itself, automatically truncated to stay under 256 KB.
 
@@ -23,6 +23,8 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] Added a short pause after each individual check (update check, winget version, ignore-list application) so the console doesn't fly by too fast to read, on top of the existing pause before upgrades start.
-- [x] The log file now records an entry when nothing needs updating, not just when packages are actually upgraded.
+- [x] Auto-update no longer asks for confirmation - it downloads, installs, and restarts as soon as a newer release is found.
+- [x] Fixed the update install/restart itself: the app used to wait for the installer while still holding its own executable open, which could stop the file from actually being replaced. It now hands off to a fully detached installer and exits immediately, letting the installer relaunch the new version once it's done.
+- [x] The "Upgrade summary" is no longer shown when there was nothing to update - the "No updates found" message already says everything.
+- [x] Increased the pause after each individual check so there's enough time to actually read it.
 - [ ] Future plans are left to the future.

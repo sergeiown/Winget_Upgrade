@@ -59,7 +59,7 @@ If an older `winget_ignore.json` from a previous version is found, its entries a
 The program logs which packages were ignored, one per line, in both the console and the log file.
 
 ### 7. Automatic updates
-On every launch, the program checks GitHub for a newer release (with a short animated "Checking for updates..." indicator). If one is found, it asks for confirmation before downloading and silently installing it, then restarts automatically. Declining, or already being on the latest version, simply continues with the regular upgrade process.
+On every launch, the program checks GitHub for a newer release (with a short animated "Checking for updates..." indicator). If one is found, it downloads and silently installs it right away, then restarts automatically - no confirmation needed. Already being on the latest version simply continues with the regular upgrade process.
 
 ## System requirements
 

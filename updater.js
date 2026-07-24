@@ -7,7 +7,6 @@ const fs = require('fs');
 const fsp = require('fs').promises;
 const os = require('os');
 const path = require('path');
-const readline = require('readline');
 const { spawn } = require('child_process');
 const settings = require('./settings');
 const consoleUi = require('./console_ui');
@@ -68,18 +67,6 @@ async function fetchLatestRelease() {
     }
 }
 
-function promptYesNo(question) {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-
-    return new Promise((resolve) => {
-        rl.question(question, (answer) => {
-            rl.close();
-            const normalized = answer.trim().toLowerCase();
-            resolve(normalized === '' || normalized === 'y' || normalized === 'yes');
-        });
-    });
-}
-
 async function downloadAsset(url, destinationPath) {
     const response = await fetch(url, { headers: { Accept: 'application/octet-stream' } });
 
@@ -91,17 +78,17 @@ async function downloadAsset(url, destinationPath) {
     await fsp.writeFile(destinationPath, buffer);
 }
 
-function runInstallerSilently(installerPath) {
-    return new Promise((resolve, reject) => {
-        const child = spawn(
-            installerPath,
-            ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/MERGETASKS=autostart'],
-            { stdio: 'ignore' }
-        );
-
-        child.on('error', reject);
-        child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`Installer exited with code ${code}`))));
-    });
+function launchInstallerAndExit(installerPath) {
+    // The installer needs to overwrite this very executable, which Windows won't allow while
+    // it's still running. Hand off to a fully detached installer process and exit immediately
+    // so the file lock is released; the installer's own post-install step relaunches the app.
+    const child = spawn(
+        installerPath,
+        ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/MERGETASKS=autostart'],
+        { detached: true, stdio: 'ignore' }
+    );
+    child.unref();
+    process.exit(0);
 }
 
 async function checkForUpdate() {
@@ -141,15 +128,9 @@ async function checkForUpdate() {
 
     const latestVersion = parseVersion(release.tag_name);
     spinner.stop(
-        consoleUi.paint(`A new version ${latestVersion} is available (current: ${settings.appVersion}).`, 'bold', 'cyan')
+        consoleUi.paint(`Updating to version ${latestVersion} (current: ${settings.appVersion})...`, 'bold', 'cyan')
     );
-    await logMessage(`Info: New version ${latestVersion} is available (current: ${settings.appVersion}).${os.EOL}`);
-
-    const confirmed = await promptYesNo('Update now? [Y/n] ');
-    if (!confirmed) {
-        await logMessage(`Info: Update to ${latestVersion} declined by user.${os.EOL}`);
-        return;
-    }
+    await logMessage(`Info: Updating to ${latestVersion} (current: ${settings.appVersion}).${os.EOL}`);
 
     const installerPath = path.join(os.tmpdir(), settings.updateAssetName);
 
@@ -157,18 +138,10 @@ async function checkForUpdate() {
         console.log(consoleUi.paint('Downloading update...', 'dim'));
         await downloadAsset(asset.browser_download_url, installerPath);
 
-        console.log(consoleUi.paint('Installing update...', 'dim'));
-        await runInstallerSilently(installerPath);
+        console.log(consoleUi.paint('Installing update and restarting...', 'dim'));
+        await logMessage(`Info: Installing ${latestVersion} and restarting.${os.EOL}`);
 
-        await logMessage(`Info: Updated to ${latestVersion}.${os.EOL}`);
-
-        spawn(process.execPath, [], {
-            cwd: path.dirname(process.execPath),
-            detached: true,
-            stdio: 'ignore',
-        }).unref();
-
-        process.exit(0);
+        launchInstallerAndExit(installerPath);
     } catch (error) {
         await logMessage(`Error: Auto-update failed: ${error.message}${os.EOL}`);
         console.log(consoleUi.paint('Update failed, continuing with the current version.', 'yellow'));

@@ -94,7 +94,20 @@ function installAndExit(installerPath) {
     // deletes it - no `start`, no app-launch supervision - so it isn't exposed to that failure mode.
     const cleanupCommand = `"${installerPath}" & del /f /q "${installerPath}"`;
 
-    const child = spawn('cmd.exe', ['/c', cleanupCommand], { detached: true, stdio: 'ignore' });
+    // Two things are required here, or the installer silently never launches:
+    // 1. windowsVerbatimArguments - without it, Node's default Windows argument escaping mangles
+    //    this quoted command before cmd.exe ever sees it.
+    // 2. An extra outer pair of quotes around the whole command - cmd.exe's own /c parsing strips
+    //    the first and last quote of its argument as if they wrapped the entire command; without
+    //    a redundant outer pair to strip, it eats the real quotes around installerPath instead and
+    //    the whole thing falls apart. Both were confirmed via isolated testing: cmd.exe failed with
+    //    "The filename, directory name, or volume label syntax is incorrect." (exit code 1) without
+    //    both fixes, and ran cleanly (exit code 0) with them, for the exact same command string.
+    const child = spawn('cmd.exe', ['/c', `"${cleanupCommand}"`], {
+        detached: true,
+        stdio: 'ignore',
+        windowsVerbatimArguments: true,
+    });
     child.unref();
     process.exit(0);
 }

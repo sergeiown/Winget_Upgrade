@@ -23,6 +23,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Fixed the visible-installer self-update introduced in 2.1.1: a Windows command-line quoting mismatch (missing `windowsVerbatimArguments`, plus cmd.exe's own outer-quote stripping) made the installer silently fail to launch at all. Confirmed fixed end-to-end - the installer now opens normally, installs, and the app relaunches on the new version.
 - [x] Version-only release with no other changes, needed so the already-installed 2.1.1 has a newer version to update to and can exercise its new visible-installer self-update flow.
 - [x] Auto-update now runs the downloaded installer the standard way (its normal window, not hidden), instead of a fully silent install, and deletes the downloaded installer from the temp folder once it's done.
 - [x] Auto-update now installs and relaunches with no confirmation prompt, and the post-update relaunch - after a rocky stretch of 2.0.x patch releases - has been confirmed working end-to-end, including a properly attached console on the relaunched instance.

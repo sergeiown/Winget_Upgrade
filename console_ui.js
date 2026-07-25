@@ -22,44 +22,50 @@ function paint(text, ...styles) {
     return styles.map((style) => codes[style]).join('') + text + codes.reset;
 }
 
-function renderProgressBar(percent, etaSeconds, width = 30) {
-    const clamped = Math.max(0, Math.min(100, percent));
-    const filledLength = Math.round((clamped / 100) * width);
-    const bar = '█'.repeat(filledLength) + '░'.repeat(width - filledLength);
-    const etaText = Number.isFinite(etaSeconds) ? `ETA ${Math.max(0, Math.round(etaSeconds))}s` : '';
+const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
-    return `${paint(bar, 'cyan')} ${String(clamped).padStart(3)}%  ${paint(etaText, 'dim')}`;
-}
+// winget prints no percentage at all once its stdout is piped (confirmed empirically - it only
+// emits plain status lines like "Downloading ..." / "Successfully verified installer hash"), so a
+// real byte-accurate progress bar/ETA isn't possible without a PTY layer, which this project
+// deliberately avoids as a dependency. Instead, show a live spinner with elapsed time and whatever
+// status line winget last reported - honest live feedback instead of a fabricated percentage.
+function createPackageProgressRenderer() {
+    const startedAt = Date.now();
+    let frameIndex = 0;
+    let statusText = 'Starting...';
+    let timer = null;
 
-function renderProgressLine(percent, etaSeconds) {
-    process.stdout.write(`\r${renderProgressBar(percent, etaSeconds)}`);
-}
+    function render() {
+        const elapsedSeconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+        const line = `${paint(spinnerFrames[frameIndex], 'cyan')} ${statusText} ${paint(`(${elapsedSeconds}s)`, 'dim')}`;
+        // Padded with trailing spaces (not measured against `line.length`, which is inflated by
+        // ANSI escape codes and wouldn't reflect the actual on-screen width) so a shorter status
+        // line fully overwrites a longer previous one.
+        process.stdout.write(`\r${line}${' '.repeat(20)}`);
+        frameIndex = (frameIndex + 1) % spinnerFrames.length;
+    }
 
-function clearProgressLine() {
-    process.stdout.write(`\r${' '.repeat(60)}\r`);
-}
+    if (isColorEnabled) {
+        render();
+        timer = setInterval(render, 100);
+    }
 
-function createProgressRenderer() {
-    let baselineTime = Date.now();
-    let baselinePercent = 0;
-    let lastPercent = 0;
-
-    return function update(percent) {
-        if (percent < lastPercent) {
-            baselineTime = Date.now();
-            baselinePercent = 0;
-        }
-        lastPercent = percent;
-
-        const elapsedMs = Date.now() - baselineTime;
-        const progressSinceBaseline = percent - baselinePercent;
-        const etaSeconds = progressSinceBaseline > 0 ? (elapsedMs / progressSinceBaseline) * (100 - percent) / 1000 : NaN;
-
-        renderProgressLine(percent, etaSeconds);
+    return {
+        update(text) {
+            statusText = text;
+            if (!isColorEnabled) {
+                console.log(text);
+            }
+        },
+        stop() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            process.stdout.write(`\r${' '.repeat(100)}\r`);
+        },
     };
 }
-
-const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 function createSpinner(text) {
     let frameIndex = 0;
@@ -171,10 +177,7 @@ function printSummaryTable(results, totalElapsedMs) {
 
 module.exports = {
     paint,
-    renderProgressBar,
-    renderProgressLine,
-    clearProgressLine,
-    createProgressRenderer,
+    createPackageProgressRenderer,
     createSpinner,
     printDiscoveredPackages,
     printPackageHeader,

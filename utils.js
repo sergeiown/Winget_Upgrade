@@ -204,11 +204,6 @@ function classifyExitCode(code) {
     return 'failed';
 }
 
-function parseProgressPercent(text) {
-    const match = text.match(/(\d{1,3})%/);
-    return match ? Math.min(100, parseInt(match[1], 10)) : null;
-}
-
 function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     const command = `${wingetLocation} ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
     const startedAt = Date.now();
@@ -224,13 +219,11 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
                 const trimmedLine = line.trim();
                 if (isLoggableLine(trimmedLine)) {
                     logStream.write(trimmedLine + os.EOL);
+                    if (onProgress) {
+                        onProgress(trimmedLine);
+                    }
                 }
             });
-
-            const percent = parseProgressPercent(text);
-            if (percent !== null && onProgress) {
-                onProgress(percent);
-            }
         });
 
         childProcess.stderr.pipe(logStream);

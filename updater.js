@@ -137,7 +137,7 @@ async function checkForUpdate() {
 
     if (!isNewerVersion(release.tag_name, settings.appVersion)) {
         spinner.stop(consoleUi.paint(`You're on the latest version (${settings.appVersion}).`, 'green'));
-        await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`);
+        await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`, { echo: false });
         return;
     }
 

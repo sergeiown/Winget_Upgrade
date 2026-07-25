@@ -84,15 +84,16 @@ function installAndExit(installerPath) {
     // lock is released; the installer's own post-install step (its [Run] entry in
     // installer/winget_upgrade.iss) relaunches the app once it's done.
     //
-    // Run the installer with no silent flags at all - the same standard wizard a user would see
-    // running it manually (autostart still defaults to checked per winget_upgrade.iss). An earlier
-    // version tried to supervise the relaunch itself (a detached batch helper that waited for the
+    // /SILENT shows the installation progress window but no wizard pages and no prompts -
+    // /SUPPRESSMSGBOXES and /NORESTART keep it from stopping for anything else either. Task
+    // selections (autostart) fall back to their .iss defaults, already checked. An earlier version
+    // tried to supervise the relaunch itself (a detached batch helper that waited for the
     // installer, launched the app, and retried with backoff) instead of trusting Inno's own
     // postinstall launch. It was dropped: that helper's own `start` call reliably failed to keep
     // the relaunched app running for reasons that didn't reproduce in isolation - a worse track
     // record than just letting Inno do it normally. This wrapper only runs the installer and then
     // deletes it - no `start`, no app-launch supervision - so it isn't exposed to that failure mode.
-    const cleanupCommand = `"${installerPath}" & del /f /q "${installerPath}"`;
+    const cleanupCommand = `"${installerPath}" /SILENT /SUPPRESSMSGBOXES /NORESTART & del /f /q "${installerPath}"`;
 
     // Two things are required here, or the installer silently never launches:
     // 1. windowsVerbatimArguments - without it, Node's default Windows argument escaping mangles

@@ -13,7 +13,7 @@
 
 - **Installer & Autostart**: A signed, per-user Inno Setup installer (no administrator rights needed) with an "run at sign-in" task enabled by default, and Start Menu shortcuts to the app, the ignore list, and the log file.
 
-- **Automatic Updates**: Checks GitHub for a newer release on every launch (with an animated "Checking for updates..." indicator) and, if one is found, downloads, installs and restarts automatically - no confirmation needed.
+- **Automatic Updates**: Checks GitHub for a newer release on every launch (with an animated "Checking for updates..." indicator) and, if one is found, downloads the installer, runs it the standard way (no confirmation prompt) and removes the downloaded installer once it's done.
 
 - **Logging**: Records upgrade events and errors in a `winget_upgrade.log` file kept next to the program itself, automatically truncated to stay under 256 KB.
 
@@ -23,6 +23,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Auto-update now runs the downloaded installer the standard way (its normal window, not hidden), instead of a fully silent install, and deletes the downloaded installer from the temp folder once it's done.
 - [x] Auto-update now installs and relaunches with no confirmation prompt, and the post-update relaunch - after a rocky stretch of 2.0.x patch releases - has been confirmed working end-to-end, including a properly attached console on the relaunched instance.
 - [x] Discovery reports full stats (installed / up to date / to update / ignored) as an aligned, colored table, even when there's nothing to update.
 - [x] Fixed a startup crash that could close the window instantly on systems where the console doesn't support raw keyboard input.

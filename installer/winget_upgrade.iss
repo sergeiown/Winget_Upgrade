@@ -2,7 +2,7 @@
 ; https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE
 
 #define MyAppName "Winget Upgrade"
-#define MyAppVersion "2.0.11"
+#define MyAppVersion "2.0.12"
 #define MyAppPublisher "Serhii I. Myshko"
 #define MyAppURL "https://github.com/sergeiown/Winget_Upgrade"
 #define MyAppExeName "winget_upgrade.exe"

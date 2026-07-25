@@ -23,8 +23,9 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] Reverted the previous release's custom retry-based relaunch helper. It was meant to fix the post-update relaunch sometimes failing silently, but extensive testing found its own `start` call unreliable for reasons that wouldn't reproduce in isolation - a worse track record than the simpler mechanism it replaced. Back to letting the installer's own post-install step relaunch the app.
+- [x] After the previous release, the relaunched window after an auto-update came up as a blank black console instead of showing anything, even though the run completed successfully in the log. Since that log entry proved the app itself runs fine and this is purely a console-attachment quirk in that one launch path, added a short startup delay plus a log line recording the console's actual state (isTTY, columns, rows) - not a confirmed fix, but the next occurrence will have real data instead of another guess.
+- [x] Reverted the previous release's custom retry-based relaunch helper (see below).
 - [x] Discovery stats are now printed as an aligned, colored table instead of a single run-on line.
 - [ ] Future plans are left to the future.
 
-Note: the update itself (download, silent install, file replacement) has been 100% reliable across every test. Only the automatic relaunch afterward is occasionally flaky, for a cause not yet pinned down - if the app doesn't reopen on its own after an update, opening it once manually gets you the new version with no side effects.
+Note: the update mechanism itself (download, silent install, file replacement, and even the app's own run once launched) has been 100% reliable across extensive testing. Only the automatic relaunch/display afterward has been occasionally flaky, for a cause not yet fully pinned down - if the app doesn't visibly reopen after an update, it likely still ran; opening it manually once is a safe fallback either way.

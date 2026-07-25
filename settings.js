@@ -7,8 +7,8 @@ const os = require('os');
 const path = require('path');
 
 const settings = {
-    appVersion: '2.1.4',
-    wingetUpgradeVersion: 'Winget Upgrade 2.1.4',
+    appVersion: '2.1.5',
+    wingetUpgradeVersion: 'Winget Upgrade 2.1.5',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(process.cwd(), 'winget_upgrade.log'),

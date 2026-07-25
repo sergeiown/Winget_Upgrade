@@ -13,7 +13,7 @@
 
 - **Installer & Autostart**: A signed, per-user Inno Setup installer (no administrator rights needed) with an "run at sign-in" task enabled by default, and Start Menu shortcuts to the app, the ignore list, and the log file.
 
-- **Automatic Updates**: Checks GitHub for a newer release on every launch (with an animated "Checking for updates..." indicator) and, if one is found, downloads the installer, runs it the standard way (no confirmation prompt) and removes the downloaded installer once it's done.
+- **Automatic Updates**: Checks GitHub for a newer release on every launch (with an animated "Checking for updates..." indicator) and, if one is found, downloads the installer, runs it in silent mode (progress window shown, no prompts, no confirmation needed) and removes the downloaded installer once it's done.
 
 - **Logging**: Records upgrade events and errors in a `winget_upgrade.log` file kept next to the program itself, automatically truncated to stay under 256 KB.
 
@@ -23,6 +23,8 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Auto-update installer now runs in Inno's `/SILENT` mode (progress window shown, no wizard pages or prompts) instead of the fully visible standard wizard from 2.1.1.
+- [x] Fully removed the ExperimentalWarning noise: the previous fix added a listener but didn't remove Node's own default one, which kept printing it regardless.
 - [x] Per-package upgrade progress actually shows something now: winget prints no percentage at all once its output is piped, so the previous progress-bar/ETA code never had any data to render. Replaced it with a live spinner showing elapsed time and winget's real status line (Downloading, Installer hash verified, etc.) as it streams in.
 - [x] Removed the Node "ExperimentalWarning: The Fetch API is an experimental feature" noise that showed up on every launch.
 - [x] Fixed the visible-installer self-update introduced in 2.1.1: a Windows command-line quoting mismatch (missing `windowsVerbatimArguments`, plus cmd.exe's own outer-quote stripping) made the installer silently fail to launch at all. Confirmed fixed end-to-end - the installer now opens normally, installs, and the app relaunches on the new version.

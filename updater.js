@@ -78,55 +78,23 @@ async function downloadAsset(url, destinationPath) {
     await fsp.writeFile(destinationPath, buffer);
 }
 
-function buildRelaunchScript(installerPath, exePath) {
-    const exeName = path.basename(exePath);
-
-    // Runs the installer to completion (this batch process, not ours, is free to do so since
-    // it never holds our exe file open), then tries to launch the updated app. A freshly
-    // written, freshly signed exe has occasionally failed its very first launch attempt right
-    // after being installed (antivirus/SmartScreen settling on a low-reputation binary) while a
-    // manual relaunch moments later works fine - so retry a few times with short backoff before
-    // giving up, using tasklist as a crude "did it actually start" check.
-    //
-    // Uses `ping` instead of `timeout` for delays - timeout refuses to run when stdin is
-    // redirected (always true for a process spawned with stdio: 'ignore'). System utilities are
-    // called through their full %SystemRoot%\System32 path, since a PATH that puts something
-    // like Git for Windows' Unix toolchain ahead of System32 would otherwise shadow `find`.
-    const system32 = '%SystemRoot%\\System32';
-
-    return [
-        '@echo off',
-        `"${installerPath}" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /MERGETASKS=autostart`,
-        `"${system32}\\PING.EXE" -n 3 127.0.0.1 >nul`,
-        'set tries=0',
-        ':retry',
-        `start "" "${exePath}"`,
-        `"${system32}\\PING.EXE" -n 3 127.0.0.1 >nul`,
-        `"${system32}\\tasklist.exe" /fi "imagename eq ${exeName}" | "${system32}\\find.exe" /i "${exeName}" >nul`,
-        'if errorlevel 1 (',
-        '    set /a tries+=1',
-        '    if %tries% lss 3 (',
-        `        "${system32}\\PING.EXE" -n 4 127.0.0.1 >nul`,
-        '        goto retry',
-        '    )',
-        ')',
-        'del "%~f0"',
-        '',
-    ].join('\r\n');
-}
-
-async function installAndRelaunch(installerPath) {
+function installAndExit(installerPath) {
     // The installer needs to overwrite this very executable, which Windows won't allow while
-    // it's still running, so the actual install+relaunch is handed off to a detached helper
-    // script and this process exits immediately to release the file lock.
-    const scriptPath = path.join(os.tmpdir(), 'winget_upgrade_relaunch.bat');
-    await fsp.writeFile(scriptPath, buildRelaunchScript(installerPath, process.execPath));
-
-    const child = spawn('cmd.exe', ['/c', scriptPath], {
-        detached: true,
-        stdio: 'ignore',
-        windowsHide: true,
-    });
+    // it's still running. Hand off to a fully detached installer process and exit immediately so
+    // the file lock is released; the installer's own post-install step (its [Run] entry in
+    // installer/winget_upgrade.iss) relaunches the app once it's done.
+    //
+    // An earlier version of this function tried to supervise that relaunch itself (a detached
+    // batch helper that waited for the installer, launched the app, and retried with backoff if
+    // it didn't seem to start) instead of trusting Inno's own postinstall launch. It was dropped:
+    // across repeated testing the app itself installed correctly every time, but that supervising
+    // script's own `start` call reliably failed to keep the relaunched app running for reasons
+    // that didn't reproduce in isolation - a worse track record than just letting Inno do it.
+    const child = spawn(
+        installerPath,
+        ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/MERGETASKS=autostart'],
+        { detached: true, stdio: 'ignore' }
+    );
     child.unref();
     process.exit(0);
 }
@@ -181,7 +149,7 @@ async function checkForUpdate() {
         console.log(consoleUi.paint('Installing update and restarting...', 'dim'));
         await logMessage(`Info: Installing ${latestVersion} and restarting.${os.EOL}`);
 
-        await installAndRelaunch(installerPath);
+        installAndExit(installerPath);
     } catch (error) {
         await logMessage(`Error: Auto-update failed: ${error.message}${os.EOL}`);
         console.log(consoleUi.paint('Update failed, continuing with the current version.', 'yellow'));

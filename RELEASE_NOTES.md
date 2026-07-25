@@ -23,6 +23,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Removed a duplicated "Already running the latest version" line from the console when no update is available - it's still recorded in the log file, just not echoed on screen next to the same message the spinner already shows.
 - [x] Auto-update installer now runs in Inno's `/SILENT` mode (progress window shown, no wizard pages or prompts) instead of the fully visible standard wizard from 2.1.1.
 - [x] Fully removed the ExperimentalWarning noise: the previous fix added a listener but didn't remove Node's own default one, which kept printing it regardless.
 - [x] Per-package upgrade progress actually shows something now: winget prints no percentage at all once its output is piped, so the previous progress-bar/ETA code never had any data to render. Replaced it with a live spinner showing elapsed time and winget's real status line (Downloading, Installer hash verified, etc.) as it streams in.

@@ -23,9 +23,8 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] After the previous release, the relaunched window after an auto-update came up as a blank black console instead of showing anything, even though the run completed successfully in the log. Since that log entry proved the app itself runs fine and this is purely a console-attachment quirk in that one launch path, added a short startup delay plus a log line recording the console's actual state (isTTY, columns, rows) - not a confirmed fix, but the next occurrence will have real data instead of another guess.
-- [x] Reverted the previous release's custom retry-based relaunch helper (see below).
-- [x] Discovery stats are now printed as an aligned, colored table instead of a single run-on line.
+- [x] Auto-update now installs and relaunches with no confirmation prompt, and the post-update relaunch - after a rocky stretch of 2.0.x patch releases - has been confirmed working end-to-end, including a properly attached console on the relaunched instance.
+- [x] Discovery reports full stats (installed / up to date / to update / ignored) as an aligned, colored table, even when there's nothing to update.
+- [x] Fixed a startup crash that could close the window instantly on systems where the console doesn't support raw keyboard input.
+- [x] The "Start Winget Upgrade automatically when I sign in" installer task is now checked by default on both fresh installs and upgrades.
 - [ ] Future plans are left to the future.
-
-Note: the update mechanism itself (download, silent install, file replacement, and even the app's own run once launched) has been 100% reliable across extensive testing. Only the automatic relaunch/display afterward has been occasionally flaky, for a cause not yet fully pinned down - if the app doesn't visibly reopen after an update, it likely still ran; opening it manually once is a safe fallback either way.

@@ -23,6 +23,8 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] The post-update relaunch no longer depends on a single attempt from the installer. It's now driven by a small detached helper that waits for the installer to finish, launches the app, checks whether it's actually running, and retries a few times with backoff before giving up - since the previous single-shot relaunch had failed silently (with nothing logged at all, not even a crash record) after at least two updates in a row.
+- [x] Reverted the previous release's custom retry-based relaunch helper. It was meant to fix the post-update relaunch sometimes failing silently, but extensive testing found its own `start` call unreliable for reasons that wouldn't reproduce in isolation - a worse track record than the simpler mechanism it replaced. Back to letting the installer's own post-install step relaunch the app.
 - [x] Discovery stats are now printed as an aligned, colored table instead of a single run-on line.
 - [ ] Future plans are left to the future.
+
+Note: the update itself (download, silent install, file replacement) has been 100% reliable across every test. Only the automatic relaunch afterward is occasionally flaky, for a cause not yet pinned down - if the app doesn't reopen on its own after an update, opening it once manually gets you the new version with no side effects.

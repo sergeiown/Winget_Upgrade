@@ -45,6 +45,18 @@ async function getWingetVersion() {
 }
 
 async function tryToPerformUpgrade() {
+    // Give a freshly allocated console (e.g. one Windows creates for this process because its
+    // own parent - the installer, right after a silent auto-update - has none of its own) a
+    // moment to finish attaching before writing to it. Also record its actual state: reports of
+    // a blank console window after an auto-update relaunch, despite the run completing normally
+    // per this very log, suggest stdout is sometimes not properly wired up in that specific
+    // launch path - this is here so the next occurrence has real data instead of another guess.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await logMessage(
+        `Console state: isTTY=${process.stdout.isTTY}, columns=${process.stdout.columns}, rows=${process.stdout.rows}${os.EOL}`,
+        { echo: false }
+    );
+
     console.clear();
 
     const currentDate = settings.date;

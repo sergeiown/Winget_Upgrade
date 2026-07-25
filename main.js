@@ -3,6 +3,14 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
+// The global fetch API (used by updater.js) still emits an ExperimentalWarning on first use in
+// Node 18 - noise the end user has no use for in a compiled CLI tool.
+process.on('warning', (warning) => {
+    if (warning.name !== 'ExperimentalWarning') {
+        console.warn(warning);
+    }
+});
+
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -104,10 +112,12 @@ async function tryToPerformUpgrade() {
 
             consoleUi.printPackageHeader(index + 1, packages.length, pkg.id);
 
-            const renderProgress = consoleUi.createProgressRenderer();
-            const result = await upgradePackage(wingetLocation, pkg, settings.logFilePath, renderProgress);
+            const progress = consoleUi.createPackageProgressRenderer();
+            const result = await upgradePackage(wingetLocation, pkg, settings.logFilePath, (line) =>
+                progress.update(line)
+            );
 
-            consoleUi.clearProgressLine();
+            progress.stop();
             consoleUi.printPackageResult(result);
             results.push(result);
         }

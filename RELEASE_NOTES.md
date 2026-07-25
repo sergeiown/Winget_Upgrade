@@ -7,7 +7,7 @@
 
 - **Winget Availability Check**: Before starting the update, the program checks whether Winget is installed on the system. If Winget is not installed, the program displays an error message and stops execution, providing instructions on how to install it. Next, the program checks the version of Winget and provides upgrade instructions if it's too old.
 
-- **Discovery-first Upgrades**: Uses `winget upgrade` to find only the packages that actually have an update available, filters out anything on the ignore list, reports how many packages are installed in total (up to date / to update / ignored - even when there's nothing to do), pauses briefly, then upgrades each package individually via `winget upgrade --id` with a live colored progress bar and ETA.
+- **Discovery-first Upgrades**: Uses `winget upgrade` to find only the packages that actually have an update available, filters out anything on the ignore list, reports how many packages are installed in total (up to date / to update / ignored - even when there's nothing to do), pauses briefly, then upgrades each package individually via `winget upgrade --id` with a live spinner showing elapsed time and winget's own status as it downloads and installs.
 
 - **Ignore List**: A plain text `winget_ignore.txt` - one entry per line, matched as a case-insensitive substring, so the exact package identifier isn't required. Reachable straight from the Start Menu.
 
@@ -23,6 +23,8 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Per-package upgrade progress actually shows something now: winget prints no percentage at all once its output is piped, so the previous progress-bar/ETA code never had any data to render. Replaced it with a live spinner showing elapsed time and winget's real status line (Downloading, Installer hash verified, etc.) as it streams in.
+- [x] Removed the Node "ExperimentalWarning: The Fetch API is an experimental feature" noise that showed up on every launch.
 - [x] Fixed the visible-installer self-update introduced in 2.1.1: a Windows command-line quoting mismatch (missing `windowsVerbatimArguments`, plus cmd.exe's own outer-quote stripping) made the installer silently fail to launch at all. Confirmed fixed end-to-end - the installer now opens normally, installs, and the app relaunches on the new version.
 - [x] Version-only release with no other changes, needed so the already-installed 2.1.1 has a newer version to update to and can exercise its new visible-installer self-update flow.
 - [x] Auto-update now runs the downloaded installer the standard way (its normal window, not hidden), instead of a fully silent install, and deletes the downloaded installer from the temp folder once it's done.

@@ -112,7 +112,17 @@ async function tryToPerformUpgrade() {
     await delay(settings.stepPauseMs);
 
     try {
-        const { stdout } = await execAsync(settings.wingetPath);
+        let stdout;
+        try {
+            stdout = (await execAsync(settings.wingetPath)).stdout;
+        } catch (whereError) {
+            // where.exe found nothing at all for this account - most commonly a standard
+            // (non-admin) profile that's never had a full interactive sign-in, so the App
+            // Installer's per-user execution alias was never provisioned. Treat it the same as
+            // "not installed" so the user gets the actionable instructions instead of a generic
+            // "Unexpected error occurred: Command failed: where.exe winget" message.
+            throw new Error(`Winget is not installed.`);
+        }
 
         const version = await getWingetVersion();
         if (version) {

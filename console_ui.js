@@ -111,12 +111,9 @@ function init(title) {
         style: { border: { fg: 'yellow' } },
     });
 
-    // While a modal (the settings screen) owns input, the global F2/F5/Esc bindings below must
-    // stay silent - blessed dispatches a keypress to the screen-wide handlers here AND to the
-    // focused element's own handlers for the same event, regardless of which widget visually
-    // "has" it. Without this guard, Esc inside the settings screen both closes it *and* triggers
-    // this app-exit handler in the same keypress, and exit wins the race - the app closes before
-    // the settings screen's own (async) save-and-close logic ever runs.
+    // Silenced while a modal owns input - blessed dispatches a keypress to both the screen-wide
+    // handler and the focused element's handler, so without this Esc would close a modal and
+    // exit the app in the same keystroke.
     screen.key(['f5'], () => {
         if (!modalOpen && skipHandler) {
             skipHandler();
@@ -266,8 +263,7 @@ function showSummary(results, totalElapsedMs) {
 }
 
 function showFatalError(message) {
-    // os.EOL is \r\n on Windows; blessed's own line-wrapping only expects \n, so a stray \r left
-    // in front of it renders as a visible blank artifact on some terminals.
+    // blessed's line-wrapping only expects \n, not os.EOL's \r\n.
     const normalizedMessage = message.replace(/\r\n/g, '\n');
 
     operationBox.setLabel(' Помилка ');

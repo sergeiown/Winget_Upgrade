@@ -16,9 +16,7 @@ function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// File-only: the TUI (console_ui.js) owns everything shown on screen, so this never echoes to
-// the console - a stray console.log while blessed holds the alternate screen buffer would corrupt
-// the display.
+// File-only - the TUI owns the screen now, so this never echoes to the console.
 async function logMessage(message) {
     await fs
         .appendFile(settings.logFilePath, message)
@@ -145,11 +143,7 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
     const totalInstalled = parseUpgradeTable(listResult.stdout).length;
     const upgradable = parseUpgradeTable(upgradeResult.stdout);
 
-    // A healthy machine always has at least a handful of installed packages, so a zero count
-    // here means winget's list command silently produced no usable table (e.g. source
-    // agreements not yet accepted for this Windows account, or a permissions issue reading its
-    // per-user source cache) rather than that the machine genuinely has nothing installed. Dump
-    // the raw output so the next occurrence has evidence instead of just "counts are zero".
+    // Zero installed packages is never legitimate, so dump the raw output for diagnosis.
     if (totalInstalled === 0) {
         await logMessage(
             `Diagnostic: "winget list" returned no parseable rows.${os.EOL}` +
@@ -197,9 +191,8 @@ function classifyExitCode(code) {
     return 'failed';
 }
 
-// Returns a controller ({ promise, skip }) rather than a bare Promise so a caller (the TUI's F5
-// "skip package" handler) can kill the in-flight winget process and resolve early instead of
-// waiting for it to finish on its own.
+// Returns { promise, skip } rather than a bare Promise so F5 can kill the in-flight process and
+// resolve early.
 function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     const command = `"${wingetLocation}" ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
     const startedAt = Date.now();

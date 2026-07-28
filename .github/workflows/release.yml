@@ -29,8 +29,7 @@ jobs:
         with:
           bun-version: latest
 
-      # npm (not bun install) so patch-package's postinstall hook runs and applies
-      # patches/neo-blessed+0.2.0.patch - bun install skips lifecycle scripts by default.
+      # npm, not bun install, so patch-package's postinstall hook actually runs.
       - name: Install dependencies
         run: npm install
 

@@ -14,11 +14,8 @@ const { logMessage } = require('./utils');
 
 const CHECK_TIMEOUT_MS = 8000;
 
-// `process.pkg` (used to gate this on "am I a pkg-compiled binary") doesn't exist under Bun -
-// bun build --compile binaries are still Bun at runtime, so that signal is gone with the pkg ->
-// Bun switch. The directory check alone is sufficient and was already doing the real work: it's
-// only true when this exe sits next to Inno Setup's uninstaller, i.e. actually installed, as
-// opposed to a dev checkout being run directly.
+// No process.pkg check here - it doesn't exist under Bun. Sitting next to unins000.exe is
+// enough to tell an installed copy from a dev checkout.
 function isRunningInstalled() {
     const installDir = path.dirname(process.execPath);
     return fs.existsSync(path.join(installDir, 'unins000.exe'));
@@ -80,21 +77,9 @@ async function downloadAsset(url, destinationPath) {
 }
 
 async function installAndExit(installerPath) {
-    // The installer needs to overwrite this very executable, which Windows won't allow while
-    // it's still running. Hand off to a detached helper and exit immediately so the file lock is
-    // released; the installer's own post-install step (its [Run] entry in
-    // installer/winget_upgrade.iss) relaunches the app once it's done.
-    //
-    // A temporary .bat file (which deletes itself as its last step - the standard Windows-batch
-    // "%~f0" self-delete trick) replaces the previous inline `cmd.exe /c "..."` command string.
-    // That inline approach needed both `windowsVerbatimArguments` and a redundant outer quote
-    // layer to survive cmd.exe's own argument parsing, and was the source of most quoting bugs in
-    // this app's history. Writing the exact same commands to a file and running it directly
-    // removes command-line quoting from the picture entirely - nothing left to escape.
-    //
-    // /SILENT shows the installation progress window but no wizard pages and no prompts -
-    // /SUPPRESSMSGBOXES and /NORESTART keep it from stopping for anything else either. Task
-    // selections (autostart) fall back to their .iss defaults, already checked.
+    // Hand off to a detached .bat helper (self-deletes last) and exit immediately so Windows
+    // releases the lock on this executable before the installer tries to overwrite it. A temp
+    // file avoids the command-line quoting that caused most of this app's past self-update bugs.
     const helperPath = path.join(os.tmpdir(), 'winget_upgrade_install.bat');
     const helperScript =
         `@echo off\r\n` +

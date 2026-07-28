@@ -61,9 +61,8 @@ async function readIgnoreLines(ignoreFilePath) {
     }
 }
 
-// Only lines that are an *exact* (case-insensitive) match for a known installed package id are
-// ours to manage from this screen - comments, blank lines, and hand-written partial matches like
-// "7zip" are left untouched, so the ignore file stays safe to hand-edit alongside this UI.
+// Only exact (case-insensitive) id matches are ours to manage - hand-written partial matches
+// like "7zip" are left untouched.
 async function applyIgnoreSelection(ignoreFilePath, checkedIds, allInstalledIds) {
     const existingLines = await readIgnoreLines(ignoreFilePath);
     const knownIds = new Set(allInstalledIds.map((id) => id.toLowerCase()));

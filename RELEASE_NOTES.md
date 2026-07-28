@@ -9,7 +9,9 @@
 
 - **Discovery-first Upgrades**: Uses `winget upgrade` to find only the packages that actually have an update available, filters out anything on the ignore list, reports how many packages are installed in total (up to date / to update / ignored - even when there's nothing to do), pauses briefly, then upgrades each package individually via `winget upgrade --id`.
 
-- **Full-screen Console UI**: Dedicated panels for session state, the current operation, live progress, and a scrolling event log, plus a settings screen (`F2`) with an autostart checkbox and a checkbox list of every installed package for the ignore list. `F5` skips the package currently upgrading; `Esc` exits (with confirmation if an upgrade is still running).
+- **Full-screen Console UI**: Dedicated panels for session state, the current operation, live progress, and a scrolling event log, plus a settings screen (`F2`) with an autostart checkbox, a checkbox list of every installed package for the ignore list, and a language switch. `F5` skips the package currently upgrading; `Esc` exits (with confirmation if an upgrade is still running).
+
+- **Ukrainian / English UI**: The interface language follows Windows' system language (Ukrainian if the system is set to Ukrainian, English otherwise) and can be changed at any time from the settings screen - no restart needed.
 
 - **Ignore List**: A plain text `winget_ignore.txt` - one entry per line, matched as a case-insensitive substring, so the exact package identifier isn't required. Reachable straight from the Start Menu or the settings screen.
 
@@ -25,6 +27,8 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Added a settings-screen language switch (Ukrainian / English, applied immediately) and made the interface follow Windows' system language by default.
+- [x] Fixed a crash on every single launch of the compiled binary: a terminal-capability fallback read a data file via a path that only existed on the machine that built it (visible only once the app was actually installed and run somewhere else - not on the machine that built it). Confirmed fixed with a real install-and-self-update cycle.
 - [x] Fixed a real bug where every counter (installed / up to date / to update) could silently read zero: the table-header detection required a column ("Available") that `winget list` only shows when at least one package actually has a pending update. Reproduced directly and confirmed fixed.
 - [x] Fixed the winget command breaking silently when the install path contains a space (e.g. a Windows profile name with a space in it) - it was being interpolated into the command line unquoted.
 - [x] Replaced the linear, scrolling console output with a full-screen console UI: dedicated panels for session state, the current operation, progress, and a scrolling event log, plus a new settings screen (`F2`) for autostart and the ignore list, `F5` to skip a package, and `Esc` to exit.

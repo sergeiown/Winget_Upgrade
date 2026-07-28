@@ -10,6 +10,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const settings = require('./settings');
 const consoleUi = require('./console_ui');
+const i18n = require('./i18n');
 const { logMessage } = require('./utils');
 
 const CHECK_TIMEOUT_MS = 8000;
@@ -94,57 +95,55 @@ async function checkForUpdate() {
         return;
     }
 
-    consoleUi.appendInfoEvent('Checking for updates...');
+    const t = i18n.get();
+
+    consoleUi.appendInfoEvent(t.checkingForUpdates);
 
     let release;
     try {
         release = await fetchLatestRelease();
     } catch (error) {
-        consoleUi.appendInfoEvent('{yellow-fg}Update check failed - continuing with the current version.{/yellow-fg}');
+        consoleUi.appendInfoEvent(t.updateCheckFailed);
         await logMessage(`Info: Update check failed: ${error.message}${os.EOL}`);
         return;
     }
 
     if (!release || !release.tag_name) {
-        consoleUi.appendInfoEvent('{yellow-fg}Update check returned no usable release information.{/yellow-fg}');
+        consoleUi.appendInfoEvent(t.updateCheckNoInfo);
         await logMessage(`Info: Update check returned no usable release information.${os.EOL}`);
         return;
     }
 
     if (!isNewerVersion(release.tag_name, settings.appVersion)) {
-        consoleUi.appendInfoEvent(`{green-fg}You're on the latest version (${settings.appVersion}).{/green-fg}`);
+        consoleUi.appendInfoEvent(t.upToDateVersion(settings.appVersion));
         await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`);
         return;
     }
 
     const asset = (release.assets || []).find((item) => item.name === settings.updateAssetName);
     if (!asset) {
-        consoleUi.appendInfoEvent(
-            `{yellow-fg}Release ${release.tag_name} has no installer asset - skipping update.{/yellow-fg}`
-        );
+        consoleUi.appendInfoEvent(t.noInstallerAsset(release.tag_name));
         await logMessage(`Info: Release ${release.tag_name} has no ${settings.updateAssetName} asset.${os.EOL}`);
         return;
     }
 
     const latestVersion = parseVersion(release.tag_name);
-    consoleUi.appendInfoEvent(
-        `{bold}{cyan-fg}Updating to version ${latestVersion} (current: ${settings.appVersion})...{/cyan-fg}{/bold}`
-    );
+    consoleUi.appendInfoEvent(t.updatingTo(latestVersion, settings.appVersion));
     await logMessage(`Info: Updating to ${latestVersion} (current: ${settings.appVersion}).${os.EOL}`);
 
     const installerPath = path.join(os.tmpdir(), settings.updateAssetName);
 
     try {
-        consoleUi.appendInfoEvent('Downloading update...');
+        consoleUi.appendInfoEvent(t.downloadingUpdate);
         await downloadAsset(asset.browser_download_url, installerPath);
 
-        consoleUi.appendInfoEvent('Installing update and restarting...');
+        consoleUi.appendInfoEvent(t.installingUpdate);
         await logMessage(`Info: Installing ${latestVersion} and restarting.${os.EOL}`);
 
         await installAndExit(installerPath);
     } catch (error) {
         await logMessage(`Error: Auto-update failed: ${error.message}${os.EOL}`);
-        consoleUi.appendInfoEvent('{yellow-fg}Update failed, continuing with the current version.{/yellow-fg}');
+        consoleUi.appendInfoEvent(t.updateFailed);
     }
 }
 

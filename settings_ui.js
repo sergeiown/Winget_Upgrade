@@ -10,6 +10,7 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const blessed = require('neo-blessed');
 const consoleUi = require('./console_ui');
+const i18n = require('./i18n');
 const { listInstalledPackages } = require('./utils');
 
 const execAsync = promisify(exec);
@@ -78,6 +79,8 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
     consoleUi.setModalOpen(true);
 
     return new Promise((resolve) => {
+        const t = i18n.get();
+
         const overlay = blessed.box({
             parent: screen,
             top: 0,
@@ -95,9 +98,9 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             height: 3,
             tags: true,
             border: { type: 'line' },
-            label: ' Налаштування ',
+            label: t.settingsTitle,
             style: { border: { fg: 'cyan' }, label: { fg: 'cyan', bold: true } },
-            content: '{bold}Esc{/bold} - зберегти й закрити    {bold}Space/Enter{/bold} - позначити пакет',
+            content: t.settingsCloseHint,
         });
 
         const autostartCheckbox = blessed.checkbox({
@@ -105,29 +108,57 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             top: 3,
             left: 2,
             height: 1,
-            content: 'Запускати автоматично при вході в Windows',
+            content: t.autostartLabel,
             mouse: true,
             checked: false,
         });
 
-        const listLabelBox = blessed.box({
+        const languageSet = blessed.radioset({
             parent: overlay,
-            top: 5,
-            left: 0,
-            width: '100%',
+            top: 4,
+            left: 2,
             height: 1,
-            content: ' Завантаження списку встановлених пакетів...',
+            width: '100%-4',
         });
 
-        const list = blessed.list({
+        const languageUkRadio = blessed.radiobutton({
+            parent: languageSet,
+            top: 0,
+            left: 0,
+            shrink: true,
+            mouse: true,
+            content: t.languageUkrainian,
+            checked: i18n.getLocale() === 'uk',
+        });
+
+        const languageEnRadio = blessed.radiobutton({
+            parent: languageSet,
+            top: 0,
+            left: 20,
+            shrink: true,
+            mouse: true,
+            content: t.languageEnglish,
+            checked: i18n.getLocale() === 'en',
+        });
+
+        const listLabelBox = blessed.box({
             parent: overlay,
             top: 6,
             left: 0,
             width: '100%',
-            height: '100%-7',
+            height: 1,
+            content: t.loadingPackages,
+        });
+
+        const list = blessed.list({
+            parent: overlay,
+            top: 7,
+            left: 0,
+            width: '100%',
+            height: '100%-8',
             tags: true,
             border: { type: 'line' },
-            label: ' Чорний список ',
+            label: t.blacklistLabel,
             keys: true,
             vi: true,
             mouse: true,
@@ -168,6 +199,28 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
         });
         autostartCheckbox.on('uncheck', () => {
             setAutostart(false).catch(() => {});
+        });
+
+        function applyLocaleToSelf() {
+            const tt = i18n.get();
+            header.setLabel(tt.settingsTitle);
+            header.setContent(tt.settingsCloseHint);
+            autostartCheckbox.setContent(tt.autostartLabel);
+            languageUkRadio.setContent(tt.languageUkrainian);
+            languageEnRadio.setContent(tt.languageEnglish);
+            list.setLabel(tt.blacklistLabel);
+            listLabelBox.setContent(tt.packagesCount(packages.length, path.basename(ignoreFilePath)));
+            renderList();
+            screen.render();
+        }
+
+        languageUkRadio.on('check', () => {
+            i18n.setLocale('uk');
+            applyLocaleToSelf();
+        });
+        languageEnRadio.on('check', () => {
+            i18n.setLocale('en');
+            applyLocaleToSelf();
         });
 
         async function close() {
@@ -215,7 +268,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
                 }
             });
 
-            listLabelBox.setContent(` Пакети (${packages.length}) - позначені записуються у ${path.basename(ignoreFilePath)}`);
+            listLabelBox.setContent(i18n.get().packagesCount(packages.length, path.basename(ignoreFilePath)));
             renderList();
             list.items.forEach((item) => item.on('click', toggleSelected));
             screen.render();

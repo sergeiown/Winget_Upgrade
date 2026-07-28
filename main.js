@@ -116,11 +116,7 @@ async function tryToPerformUpgrade() {
         try {
             stdout = (await execAsync(settings.wingetPath)).stdout;
         } catch (whereError) {
-            // where.exe found nothing at all for this account - most commonly a standard
-            // (non-admin) profile that's never had a full interactive sign-in, so the App
-            // Installer's per-user execution alias was never provisioned. Treat it the same as
-            // "not installed" so the user gets the actionable instructions instead of a generic
-            // "Unexpected error occurred: Command failed: where.exe winget" message.
+            // where.exe found nothing - treat the same as "not installed" for the friendlier message.
             throw new Error(`Winget is not installed.`);
         }
 
@@ -200,8 +196,6 @@ tryToPerformUpgrade().catch(async (error) => {
         console.error(`Failed to log fatal error: ${loggingError}`);
     }
 
-    // A stray console.error while blessed still holds the alternate screen buffer would corrupt
-    // the display, so route through the TUI whenever it's already up.
     if (consoleUi.getScreen()) {
         consoleUi.showFatalError(`Fatal error: ${error && error.message ? error.message : error}`);
         await consoleUi.waitAnyKeyOrTimeout(15000);

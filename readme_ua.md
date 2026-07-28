@@ -1,10 +1,10 @@
-# Winget Upgrade
+# <img src="docs/icon.png" width="32" height="32" valign="bottom"> Winget Upgrade
 
 [EN](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme.md) | **[UA](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme_ua.md)**
 
-Winget Upgrader - це інструмент командного рядка Node.js, який автоматизує процес оновлення програмного забезпечення на комп'ютері за допомогою Windows Package Manager ([Winget](https://learn.microsoft.com/uk-ua/windows/package-manager/winget/)).
+Winget Upgrade - це інструмент командного рядка Node.js, який автоматизує процес оновлення програмного забезпечення на комп'ютері за допомогою Windows Package Manager ([Winget](https://learn.microsoft.com/uk-ua/windows/package-manager/winget/)).
 
-Winget Upgrader використовує команди Winget для оновлення всього програмного забезпечення, встановленого на вашому комп'ютері. Він автоматично перевіряє наявність Winget на вашій системі, виконує оновлення програм та веде журнал подій для зручності слідкування за процесом.
+Winget Upgrade використовує команди Winget для оновлення всього програмного забезпечення, встановленого на вашому комп'ютері. Він автоматично перевіряє наявність Winget у вашій системі, виконує оновлення програм та веде журнал подій для зручності слідкування за процесом.
 
 ```
 Windows Package Manager (Winget) - це інструмент управління пакетами для ОС Windows,

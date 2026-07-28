@@ -14,11 +14,12 @@ const { logMessage } = require('./utils');
 
 const CHECK_TIMEOUT_MS = 8000;
 
+// `process.pkg` (used to gate this on "am I a pkg-compiled binary") doesn't exist under Bun -
+// bun build --compile binaries are still Bun at runtime, so that signal is gone with the pkg ->
+// Bun switch. The directory check alone is sufficient and was already doing the real work: it's
+// only true when this exe sits next to Inno Setup's uninstaller, i.e. actually installed, as
+// opposed to a dev checkout being run directly.
 function isRunningInstalled() {
-    if (!process.pkg) {
-        return false;
-    }
-
     const installDir = path.dirname(process.execPath);
     return fs.existsSync(path.join(installDir, 'unins000.exe'));
 }
@@ -78,37 +79,32 @@ async function downloadAsset(url, destinationPath) {
     await fsp.writeFile(destinationPath, buffer);
 }
 
-function installAndExit(installerPath) {
+async function installAndExit(installerPath) {
     // The installer needs to overwrite this very executable, which Windows won't allow while
-    // it's still running. Hand off to a fully detached process and exit immediately so the file
-    // lock is released; the installer's own post-install step (its [Run] entry in
+    // it's still running. Hand off to a detached helper and exit immediately so the file lock is
+    // released; the installer's own post-install step (its [Run] entry in
     // installer/winget_upgrade.iss) relaunches the app once it's done.
+    //
+    // A temporary .bat file (which deletes itself as its last step - the standard Windows-batch
+    // "%~f0" self-delete trick) replaces the previous inline `cmd.exe /c "..."` command string.
+    // That inline approach needed both `windowsVerbatimArguments` and a redundant outer quote
+    // layer to survive cmd.exe's own argument parsing, and was the source of most quoting bugs in
+    // this app's history. Writing the exact same commands to a file and running it directly
+    // removes command-line quoting from the picture entirely - nothing left to escape.
     //
     // /SILENT shows the installation progress window but no wizard pages and no prompts -
     // /SUPPRESSMSGBOXES and /NORESTART keep it from stopping for anything else either. Task
-    // selections (autostart) fall back to their .iss defaults, already checked. An earlier version
-    // tried to supervise the relaunch itself (a detached batch helper that waited for the
-    // installer, launched the app, and retried with backoff) instead of trusting Inno's own
-    // postinstall launch. It was dropped: that helper's own `start` call reliably failed to keep
-    // the relaunched app running for reasons that didn't reproduce in isolation - a worse track
-    // record than just letting Inno do it normally. This wrapper only runs the installer and then
-    // deletes it - no `start`, no app-launch supervision - so it isn't exposed to that failure mode.
-    const cleanupCommand = `"${installerPath}" /SILENT /SUPPRESSMSGBOXES /NORESTART & del /f /q "${installerPath}"`;
+    // selections (autostart) fall back to their .iss defaults, already checked.
+    const helperPath = path.join(os.tmpdir(), 'winget_upgrade_install.bat');
+    const helperScript =
+        `@echo off\r\n` +
+        `"${installerPath}" /SILENT /SUPPRESSMSGBOXES /NORESTART\r\n` +
+        `del /f /q "${installerPath}"\r\n` +
+        `del /f /q "%~f0"\r\n`;
 
-    // Two things are required here, or the installer silently never launches:
-    // 1. windowsVerbatimArguments - without it, Node's default Windows argument escaping mangles
-    //    this quoted command before cmd.exe ever sees it.
-    // 2. An extra outer pair of quotes around the whole command - cmd.exe's own /c parsing strips
-    //    the first and last quote of its argument as if they wrapped the entire command; without
-    //    a redundant outer pair to strip, it eats the real quotes around installerPath instead and
-    //    the whole thing falls apart. Both were confirmed via isolated testing: cmd.exe failed with
-    //    "The filename, directory name, or volume label syntax is incorrect." (exit code 1) without
-    //    both fixes, and ran cleanly (exit code 0) with them, for the exact same command string.
-    const child = spawn('cmd.exe', ['/c', `"${cleanupCommand}"`], {
-        detached: true,
-        stdio: 'ignore',
-        windowsVerbatimArguments: true,
-    });
+    await fsp.writeFile(helperPath, helperScript);
+
+    const child = spawn(helperPath, [], { detached: true, stdio: 'ignore' });
     child.unref();
     process.exit(0);
 }
@@ -118,55 +114,57 @@ async function checkForUpdate() {
         return;
     }
 
-    const spinner = consoleUi.createSpinner('Checking for updates...').start();
+    consoleUi.appendInfoEvent('Checking for updates...');
 
     let release;
     try {
         release = await fetchLatestRelease();
     } catch (error) {
-        spinner.stop(consoleUi.paint('Update check failed - continuing with the current version.', 'yellow'));
+        consoleUi.appendInfoEvent('{yellow-fg}Update check failed - continuing with the current version.{/yellow-fg}');
         await logMessage(`Info: Update check failed: ${error.message}${os.EOL}`);
         return;
     }
 
     if (!release || !release.tag_name) {
-        spinner.stop(consoleUi.paint('Update check returned no usable release information.', 'yellow'));
+        consoleUi.appendInfoEvent('{yellow-fg}Update check returned no usable release information.{/yellow-fg}');
         await logMessage(`Info: Update check returned no usable release information.${os.EOL}`);
         return;
     }
 
     if (!isNewerVersion(release.tag_name, settings.appVersion)) {
-        spinner.stop(consoleUi.paint(`You're on the latest version (${settings.appVersion}).`, 'green'));
-        await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`, { echo: false });
+        consoleUi.appendInfoEvent(`{green-fg}You're on the latest version (${settings.appVersion}).{/green-fg}`);
+        await logMessage(`Info: Already running the latest version (${settings.appVersion}).${os.EOL}`);
         return;
     }
 
     const asset = (release.assets || []).find((item) => item.name === settings.updateAssetName);
     if (!asset) {
-        spinner.stop(consoleUi.paint(`Release ${release.tag_name} has no installer asset - skipping update.`, 'yellow'));
+        consoleUi.appendInfoEvent(
+            `{yellow-fg}Release ${release.tag_name} has no installer asset - skipping update.{/yellow-fg}`
+        );
         await logMessage(`Info: Release ${release.tag_name} has no ${settings.updateAssetName} asset.${os.EOL}`);
         return;
     }
 
     const latestVersion = parseVersion(release.tag_name);
-    spinner.stop(
-        consoleUi.paint(`Updating to version ${latestVersion} (current: ${settings.appVersion})...`, 'bold', 'cyan')
+    consoleUi.appendInfoEvent(
+        `{bold}{cyan-fg}Updating to version ${latestVersion} (current: ${settings.appVersion})...{/cyan-fg}{/bold}`
     );
     await logMessage(`Info: Updating to ${latestVersion} (current: ${settings.appVersion}).${os.EOL}`);
 
     const installerPath = path.join(os.tmpdir(), settings.updateAssetName);
 
     try {
-        console.log(consoleUi.paint('Downloading update...', 'dim'));
+        consoleUi.appendInfoEvent('Downloading update...');
         await downloadAsset(asset.browser_download_url, installerPath);
 
-        console.log(consoleUi.paint('Installing update and restarting...', 'dim'));
+        consoleUi.appendInfoEvent('Installing update and restarting...');
         await logMessage(`Info: Installing ${latestVersion} and restarting.${os.EOL}`);
 
-        installAndExit(installerPath);
+        await installAndExit(installerPath);
     } catch (error) {
         await logMessage(`Error: Auto-update failed: ${error.message}${os.EOL}`);
-        console.log(consoleUi.paint('Update failed, continuing with the current version.', 'yellow'));
+        consoleUi.appendInfoEvent('{yellow-fg}Update failed, continuing with the current version.{/yellow-fg}');
     }
 }
 

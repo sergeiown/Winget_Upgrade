@@ -1,0 +1,70 @@
+diff --git a/node_modules/neo-blessed/lib/widget.js b/node_modules/neo-blessed/lib/widget.js
+index 6d1444d..7c36804 100644
+--- a/node_modules/neo-blessed/lib/widget.js
++++ b/node_modules/neo-blessed/lib/widget.js
+@@ -23,7 +23,6 @@ widget.classes = [
+   'Textbox',
+   'Button',
+   'ProgressBar',
+-  'FileManager',
+   'Checkbox',
+   'RadioSet',
+   'RadioButton',
+@@ -35,22 +34,46 @@ widget.classes = [
+   'Log',
+   'Table',
+   'ListTable',
+-  'Terminal',
+-  'Image',
+-  'ANSIImage',
+-  'OverlayImage',
+-  'Video',
+   'Layout'
+ ];
+ 
+-widget.classes.forEach(function(name) {
+-  var file = name.toLowerCase();
+-  widget[name] = widget[file] = require('./widgets/' + file);
+-});
++// bun build --compile cannot statically resolve `require('./widgets/' + file)` (the file name
++// only exists at runtime), so each widget is required by its literal path instead. Terminal,
++// Image, ANSIImage, OverlayImage, Video and FileManager are omitted entirely: they are unused by
++// this app and pull in either missing optional native deps (pty.js/term.js) or neo-blessed's own
++// broken `require('blessed/lib/colors')` self-reference in vendor/tng.js, both of which fail the
++// bundler outright. See patches/neo-blessed+0.2.0.patch.
++widget.Node = widget.node = require('./widgets/node');
++widget.Screen = widget.screen = require('./widgets/screen');
++widget.Element = widget.element = require('./widgets/element');
++widget.Box = widget.box = require('./widgets/box');
++widget.Text = widget.text = require('./widgets/text');
++widget.Line = widget.line = require('./widgets/line');
++widget.ScrollableBox = widget.scrollablebox = require('./widgets/scrollablebox');
++widget.ScrollableText = widget.scrollabletext = require('./widgets/scrollabletext');
++widget.BigText = widget.bigtext = require('./widgets/bigtext');
++widget.List = widget.list = require('./widgets/list');
++widget.Form = widget.form = require('./widgets/form');
++widget.Input = widget.input = require('./widgets/input');
++widget.Textarea = widget.textarea = require('./widgets/textarea');
++widget.Textbox = widget.textbox = require('./widgets/textbox');
++widget.Button = widget.button = require('./widgets/button');
++widget.ProgressBar = widget.progressbar = require('./widgets/progressbar');
++widget.Checkbox = widget.checkbox = require('./widgets/checkbox');
++widget.RadioSet = widget.radioset = require('./widgets/radioset');
++widget.RadioButton = widget.radiobutton = require('./widgets/radiobutton');
++widget.Prompt = widget.prompt = require('./widgets/prompt');
++widget.Question = widget.question = require('./widgets/question');
++widget.Message = widget.message = require('./widgets/message');
++widget.Loading = widget.loading = require('./widgets/loading');
++widget.Listbar = widget.listbar = require('./widgets/listbar');
++widget.Log = widget.log = require('./widgets/log');
++widget.Table = widget.table = require('./widgets/table');
++widget.ListTable = widget.listtable = require('./widgets/listtable');
++widget.Layout = widget.layout = require('./widgets/layout');
+ 
+ widget.aliases = {
+-  'ListBar': 'Listbar',
+-  'PNG': 'ANSIImage'
++  'ListBar': 'Listbar'
+ };
+ 
+ Object.keys(widget.aliases).forEach(function(key) {

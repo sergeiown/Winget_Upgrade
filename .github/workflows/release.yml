@@ -22,13 +22,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
 
-      - name: Install pkg
-        run: npm install -g pkg
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # npm (not bun install) so patch-package's postinstall hook runs and applies
+      # patches/neo-blessed+0.2.0.patch - bun install skips lifecycle scripts by default.
+      - name: Install dependencies
+        run: npm install
 
       - name: Build executable
-        run: pkg --compress Brotli --target node18-win-x64 --output winget_upgrade.exe main.js
+        run: bun build --compile --windows-icon=sagittarius_1x1.ico --outfile winget_upgrade.exe main.js
 
       - name: Decode code-signing certificate
         shell: pwsh

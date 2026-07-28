@@ -16,41 +16,13 @@ function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function setConsoleTitle(title) {
-    try {
-        await execAsync(`title ${title}`);
-    } catch (error) {
-        console.error(`Failed to set console title: ${error}`);
-    }
-}
-
-async function waitForKeyPressAndExit(exitCode) {
-    if (typeof process.stdin.setRawMode !== 'function' || !process.stdin.isTTY) {
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-        process.exit(exitCode);
-        return;
-    }
-
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-
-    await new Promise((resolve) => {
-        process.stdin.once('data', () => {
-            resolve();
-        });
-    });
-
-    process.exit(exitCode);
-}
-
-async function logMessage(message, { echo = true } = {}) {
+// File-only: the TUI (console_ui.js) owns everything shown on screen, so this never echoes to
+// the console - a stray console.log while blessed holds the alternate screen buffer would corrupt
+// the display.
+async function logMessage(message) {
     await fs
         .appendFile(settings.logFilePath, message)
         .catch((err) => console.error(`Error writing to log file: ${err.message}`));
-
-    if (echo) {
-        console.log(message);
-    }
 }
 
 function isLoggableLine(line) {
@@ -152,9 +124,16 @@ function parseUpgradeTable(output) {
     return packages;
 }
 
+async function listInstalledPackages(wingetLocation) {
+    const listCommand = `"${wingetLocation}" ${settings.wingetArgs.list.join(' ')}`;
+    const { stdout } = await execAsync(listCommand, { maxBuffer: 10 * 1024 * 1024 });
+
+    return parseUpgradeTable(stdout);
+}
+
 async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
-    const listCommand = `${wingetLocation} ${settings.wingetArgs.list.join(' ')}`;
-    const upgradeCommand = `${wingetLocation} ${settings.wingetArgs.upgradeList.join(' ')}`;
+    const listCommand = `"${wingetLocation}" ${settings.wingetArgs.list.join(' ')}`;
+    const upgradeCommand = `"${wingetLocation}" ${settings.wingetArgs.upgradeList.join(' ')}`;
 
     const execOptions = { maxBuffer: 10 * 1024 * 1024 };
 
@@ -165,6 +144,20 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
 
     const totalInstalled = parseUpgradeTable(listResult.stdout).length;
     const upgradable = parseUpgradeTable(upgradeResult.stdout);
+
+    // A healthy machine always has at least a handful of installed packages, so a zero count
+    // here means winget's list command silently produced no usable table (e.g. source
+    // agreements not yet accepted for this Windows account, or a permissions issue reading its
+    // per-user source cache) rather than that the machine genuinely has nothing installed. Dump
+    // the raw output so the next occurrence has evidence instead of just "counts are zero".
+    if (totalInstalled === 0) {
+        await logMessage(
+            `Diagnostic: "winget list" returned no parseable rows.${os.EOL}` +
+                `stdout (first 1000 chars): ${listResult.stdout.slice(0, 1000)}${os.EOL}` +
+                `stderr (first 1000 chars): ${listResult.stderr.slice(0, 1000)}${os.EOL}`
+        );
+    }
+
     const ignoreEntries = await loadIgnoreList(ignoreFilePath);
     const removedPackages = [];
 
@@ -204,39 +197,50 @@ function classifyExitCode(code) {
     return 'failed';
 }
 
+// Returns a controller ({ promise, skip }) rather than a bare Promise so a caller (the TUI's F5
+// "skip package" handler) can kill the in-flight winget process and resolve early instead of
+// waiting for it to finish on its own.
 function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
-    const command = `${wingetLocation} ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
+    const command = `"${wingetLocation}" ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
     const startedAt = Date.now();
     const logStream = createWriteStream(logFilePath, { flags: 'a' });
+    const childProcess = exec(command);
+    let skipped = false;
 
-    return new Promise((resolve) => {
-        const childProcess = exec(command);
+    childProcess.stdout.on('data', (data) => {
+        const text = data.toString();
 
-        childProcess.stdout.on('data', (data) => {
-            const text = data.toString();
-
-            text.split(os.EOL).forEach((line) => {
-                const trimmedLine = line.trim();
-                if (isLoggableLine(trimmedLine)) {
-                    logStream.write(trimmedLine + os.EOL);
-                    if (onProgress) {
-                        onProgress(trimmedLine);
-                    }
+        text.split(os.EOL).forEach((line) => {
+            const trimmedLine = line.trim();
+            if (isLoggableLine(trimmedLine)) {
+                logStream.write(trimmedLine + os.EOL);
+                if (onProgress) {
+                    onProgress(trimmedLine);
                 }
-            });
+            }
         });
+    });
 
-        childProcess.stderr.pipe(logStream);
+    childProcess.stderr.pipe(logStream);
 
+    const promise = new Promise((resolve) => {
         childProcess.on('exit', (code) => {
             logStream.end();
             resolve({
                 id: pkg.id,
-                status: classifyExitCode(code),
+                status: skipped ? 'skipped' : classifyExitCode(code),
                 durationMs: Date.now() - startedAt,
             });
         });
     });
+
+    return {
+        promise,
+        skip() {
+            skipped = true;
+            childProcess.kill();
+        },
+    };
 }
 
 async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
@@ -260,10 +264,9 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
 
 module.exports = {
     delay,
-    setConsoleTitle,
-    waitForKeyPressAndExit,
     logMessage,
     checkAndTrimLogFile,
     discoverUpgradablePackages,
+    listInstalledPackages,
     upgradePackage,
 };

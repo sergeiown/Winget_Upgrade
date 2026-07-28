@@ -41,6 +41,10 @@ english.AdditionalTasksGroup=Additional tasks
 ukrainian.AutoStartTaskDescription=Запускати Winget Upgrade автоматично при вході в систему
 ukrainian.AdditionalTasksGroup=Додаткові завдання
 
+; Checked by default (no "unchecked" flag) on both fresh installs and upgrades - this is a
+; deliberate, previously-fixed default (see RELEASE_NOTES.md), not an oversight. The app's own
+; Settings screen (F2) can toggle the same {userstartup} shortcut afterwards - both point at the
+; identical file, so neither mechanism fights the other.
 [Tasks]
 Name: "autostart"; Description: "{cm:AutoStartTaskDescription}"; GroupDescription: "{cm:AdditionalTasksGroup}"
 

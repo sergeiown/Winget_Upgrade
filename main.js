@@ -17,17 +17,10 @@ process.on('warning', (warning) => {
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const {
-    delay,
-    setConsoleTitle,
-    waitForKeyPressAndExit,
-    logMessage,
-    checkAndTrimLogFile,
-    discoverUpgradablePackages,
-    upgradePackage,
-} = require('./utils');
+const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgradePackage } = require('./utils');
 const settings = require('./settings');
 const consoleUi = require('./console_ui');
+const settingsUi = require('./settings_ui');
 const { checkForUpdate } = require('./updater');
 
 const execAsync = promisify(exec);
@@ -39,41 +32,81 @@ async function getWingetVersion() {
         const [major, minor] = version.split('.').map(Number);
 
         if (major < 1 || (major === 1 && minor < 4)) {
-            const versionMessage = `Error: Outdated winget version (${version}). Update required.${os.EOL}`;
-            await logMessage(versionMessage);
-
-            console.log(settings.outdatedVersionInstructions + os.EOL + `Press any key to exit...`);
-
-            await waitForKeyPressAndExit(1);
+            await logMessage(`Error: Outdated winget version (${version}). Update required.${os.EOL}`);
+            consoleUi.showFatalError(`Outdated winget version (${version}).\n\n${settings.outdatedVersionInstructions}`);
+            await consoleUi.waitAnyKeyOrTimeout(15000);
+            consoleUi.exitApp(1);
         }
 
         return version;
     } catch (error) {
-        logMessage(`Error: Failed to retrieve winget version: ${error}${os.EOL}`);
-
+        await logMessage(`Error: Failed to retrieve winget version: ${error}${os.EOL}`);
         return null;
     }
 }
 
-async function tryToPerformUpgrade() {
-    // Give a freshly allocated console (e.g. one Windows creates for this process because its
-    // own parent - the installer, right after a silent auto-update - has none of its own) a
-    // moment to finish attaching before writing to it. Also record its actual state: reports of
-    // a blank console window after an auto-update relaunch, despite the run completing normally
-    // per this very log, suggest stdout is sometimes not properly wired up in that specific
-    // launch path - this is here so the next occurrence has real data instead of another guess.
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    await logMessage(
-        `Console state: isTTY=${process.stdout.isTTY}, columns=${process.stdout.columns}, rows=${process.stdout.rows}${os.EOL}`,
-        { echo: false }
-    );
+let settingsOpen = false;
 
-    console.clear();
+function openSettingsScreen(wingetLocation) {
+    if (settingsOpen) {
+        return;
+    }
+    settingsOpen = true;
+    settingsUi
+        .open(consoleUi.getScreen(), { wingetLocation, ignoreFilePath: settings.ignoreFilePath })
+        .finally(() => {
+            settingsOpen = false;
+        });
+}
+
+async function runUpgrades(wingetLocation, packages, discoveryMeta) {
+    const results = [];
+    const overallStartedAt = Date.now();
+
+    for (let index = 0; index < packages.length; index++) {
+        const pkg = packages[index];
+
+        consoleUi.setSessionState({
+            index: index + 1,
+            total: packages.length,
+            totalInstalled: discoveryMeta.totalInstalled,
+            upToDateCount: discoveryMeta.upToDateCount,
+            toUpdateCount: packages.length,
+            ignoredCount: discoveryMeta.ignoredCount,
+        });
+
+        consoleUi.setCurrentOperation(pkg);
+        consoleUi.startProgress('Starting...');
+        consoleUi.setUpgradeInProgress(true);
+
+        const controller = upgradePackage(wingetLocation, pkg, settings.logFilePath, (line) => {
+            consoleUi.appendOperationLine(line);
+            consoleUi.updateProgressStatus(line);
+        });
+
+        consoleUi.onSkipRequested(() => controller.skip());
+
+        const result = await controller.promise;
+
+        consoleUi.onSkipRequested(null);
+        consoleUi.stopProgress();
+        consoleUi.appendResultEvent(result);
+        results.push(result);
+    }
+
+    consoleUi.setUpgradeInProgress(false);
+
+    return { results, totalElapsedMs: Date.now() - overallStartedAt };
+}
+
+async function tryToPerformUpgrade() {
+    consoleUi.init(`Winget Upgrade ${settings.appVersion}`);
+    consoleUi.onSettingsRequested(() => {
+        consoleUi.appendInfoEvent('{yellow-fg}Налаштування доступні після визначення winget.{/yellow-fg}');
+    });
 
     const currentDate = settings.date;
-    logMessage(`${os.EOL}>> ${currentDate}${os.EOL}`);
-
-    await setConsoleTitle(settings.wingetUpgradeVersion);
+    await logMessage(`${os.EOL}>> ${currentDate}${os.EOL}`);
 
     await checkForUpdate();
     await delay(settings.stepPauseMs);
@@ -83,7 +116,7 @@ async function tryToPerformUpgrade() {
 
         const version = await getWingetVersion();
         if (version) {
-            console.log(`Winget ${version} is installed on the system.${os.EOL}`);
+            consoleUi.appendInfoEvent(`{green-fg}Winget ${version} is installed on the system.{/green-fg}`);
         } else {
             throw new Error(`Winget is not installed.`);
         }
@@ -91,6 +124,7 @@ async function tryToPerformUpgrade() {
         await delay(settings.stepPauseMs);
 
         const wingetLocation = stdout.trim();
+        consoleUi.onSettingsRequested(() => openSettingsScreen(wingetLocation));
 
         const { packages, totalInstalled, upToDateCount, ignoredCount } = await discoverUpgradablePackages(
             wingetLocation,
@@ -98,63 +132,54 @@ async function tryToPerformUpgrade() {
         );
 
         await logMessage(
-            `Checked ${totalInstalled} installed package(s): ${upToDateCount} up to date, ${packages.length} to update, ${ignoredCount} ignored.${os.EOL}`,
-            { echo: false }
+            `Checked ${totalInstalled} installed package(s): ${upToDateCount} up to date, ${packages.length} to update, ${ignoredCount} ignored.${os.EOL}`
         );
 
-        await delay(settings.stepPauseMs);
+        consoleUi.setSessionState({
+            index: 0,
+            total: packages.length,
+            totalInstalled,
+            upToDateCount,
+            toUpdateCount: packages.length,
+            ignoredCount,
+        });
 
-        consoleUi.printDiscoveredPackages(packages, { totalInstalled, upToDateCount, ignoredCount });
+        if (packages.length === 0) {
+            consoleUi.appendInfoEvent('{green-fg}No updates found - everything is up to date.{/green-fg}');
+        } else {
+            consoleUi.appendInfoEvent(`{bold}Packages to update:{/bold} ${packages.map((pkg) => pkg.id).join(', ')}`);
+        }
+
         await delay(settings.preUpgradePauseMs);
 
-        const results = [];
-        const overallStartedAt = Date.now();
-
-        for (let index = 0; index < packages.length; index++) {
-            const pkg = packages[index];
-
-            consoleUi.printPackageHeader(index + 1, packages.length, pkg.id);
-
-            const progress = consoleUi.createPackageProgressRenderer();
-            const result = await upgradePackage(wingetLocation, pkg, settings.logFilePath, (line) =>
-                progress.update(line)
-            );
-
-            progress.stop();
-            consoleUi.printPackageResult(result);
-            results.push(result);
-        }
+        const { results, totalElapsedMs } = await runUpgrades(wingetLocation, packages, {
+            totalInstalled,
+            upToDateCount,
+            ignoredCount,
+        });
 
         await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
+        await logMessage(settings.finalLogMessage);
 
-        try {
-            await logMessage(settings.finalLogMessage);
-
-            if (results.length > 0) {
-                consoleUi.printSummaryTable(results, Date.now() - overallStartedAt);
-                await delay(settings.stepPauseMs);
-            }
-
-            console.log(settings.finalMessage);
-
-            await Promise.race([
-                waitForKeyPressAndExit(0),
-                new Promise((resolve) => setTimeout(resolve, 10000)),
-            ]);
-
-            process.exit(0);
-        } catch (error) {
-            console.error(`An error occurred:`, error);
+        if (results.length > 0) {
+            consoleUi.showSummary(results, totalElapsedMs);
         }
+
+        consoleUi.appendInfoEvent(`{dim}${settings.finalMessage.trim()}{/dim}`);
+
+        await consoleUi.waitAnyKeyOrTimeout(10000);
+        consoleUi.exitApp(0);
     } catch (error) {
         if (error.message.includes(`Winget is not installed.`)) {
             await logMessage(`Error: winget is not installed on this system.${os.EOL}`);
-            console.log(settings.notInstalledSollutions + os.EOL + `Press any key to exit...`);
+            consoleUi.showFatalError(`Winget is not installed on this system.\n\n${settings.notInstalledSollutions}`);
         } else {
             await logMessage(`Unexpected error occurred: ${error.message}${os.EOL}`);
+            consoleUi.showFatalError(`Unexpected error occurred: ${error.message}`);
         }
 
-        await waitForKeyPressAndExit(1);
+        await consoleUi.waitAnyKeyOrTimeout(15000);
+        consoleUi.exitApp(1);
     }
 }
 
@@ -165,7 +190,14 @@ tryToPerformUpgrade().catch(async (error) => {
         console.error(`Failed to log fatal error: ${loggingError}`);
     }
 
-    console.error(`Fatal error:`, error);
-
-    await waitForKeyPressAndExit(1);
+    // A stray console.error while blessed still holds the alternate screen buffer would corrupt
+    // the display, so route through the TUI whenever it's already up.
+    if (consoleUi.getScreen()) {
+        consoleUi.showFatalError(`Fatal error: ${error && error.message ? error.message : error}`);
+        await consoleUi.waitAnyKeyOrTimeout(15000);
+        consoleUi.exitApp(1);
+    } else {
+        console.error(`Fatal error:`, error);
+        process.exit(1);
+    }
 });

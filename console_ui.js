@@ -4,15 +4,20 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 'use strict';
 
 const blessed = require('neo-blessed');
+const i18n = require('./i18n');
 
 const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
-const STATUS_META = {
-    updated: { label: 'Updated', tag: 'green-fg', icon: '✓' },
-    'no-update': { label: 'Up to date', tag: 'white-fg', icon: '·' },
-    failed: { label: 'Failed', tag: 'red-fg', icon: '✗' },
-    skipped: { label: 'Skipped', tag: 'yellow-fg', icon: '»' },
-};
+function statusMeta(status) {
+    const t = i18n.get();
+    const table = {
+        updated: { label: t.statusUpdated, tag: 'green-fg', icon: '✓' },
+        'no-update': { label: t.statusUpToDate, tag: 'white-fg', icon: '·' },
+        failed: { label: t.statusFailed, tag: 'red-fg', icon: '✗' },
+        skipped: { label: t.statusSkipped, tag: 'yellow-fg', icon: '»' },
+    };
+    return table[status] || { label: status, tag: 'white-fg', icon: ' ' };
+}
 
 let screen = null;
 let sessionBox = null;
@@ -32,6 +37,15 @@ let settingsHandler = null;
 let upgradeInProgress = false;
 let modalOpen = false;
 
+function applyLocaleToChrome() {
+    const t = i18n.get();
+    operationBox.setLabel(t.operationLabel);
+    progressBox.setLabel(t.progressLabel);
+    eventsLog.setLabel(t.eventsLabel);
+    footerBox.setContent(t.footer);
+    screen.render();
+}
+
 function init(title) {
     screen = blessed.screen({
         smartCSR: true,
@@ -40,6 +54,8 @@ function init(title) {
         dockBorders: true,
         title: title || 'Winget Upgrade',
     });
+
+    const t = i18n.get();
 
     const boxDefaults = {
         parent: screen,
@@ -63,7 +79,7 @@ function init(title) {
         Object.assign({}, boxDefaults, {
             top: 4,
             height: 10,
-            label: ' Поточна операція ',
+            label: t.operationLabel,
             scrollable: true,
             alwaysScroll: true,
             scrollbar: { ch: ' ', style: { bg: 'cyan' } },
@@ -74,7 +90,7 @@ function init(title) {
         Object.assign({}, boxDefaults, {
             top: 14,
             height: 3,
-            label: ' Прогрес ',
+            label: t.progressLabel,
         })
     );
 
@@ -82,7 +98,7 @@ function init(title) {
         Object.assign({}, boxDefaults, {
             top: 17,
             height: '100%-18',
-            label: ' Додатково: останні події ',
+            label: t.eventsLabel,
             scrollable: true,
             alwaysScroll: true,
             scrollbar: { ch: ' ', style: { bg: 'cyan' } },
@@ -97,7 +113,7 @@ function init(title) {
         height: 1,
         tags: true,
         style: { fg: 'black', bg: 'cyan' },
-        content: ' {bold}F2{/bold} Налаштування    {bold}F5{/bold} Пропустити пакет    {bold}Esc{/bold} Вихід ',
+        content: t.footer,
     });
 
     exitQuestion = blessed.question({
@@ -110,6 +126,8 @@ function init(title) {
         border: { type: 'line' },
         style: { border: { fg: 'yellow' } },
     });
+
+    i18n.onLocaleChange(applyLocaleToChrome);
 
     screen.key(['f5'], () => {
         if (!modalOpen && skipHandler) {
@@ -146,7 +164,7 @@ function requestExit() {
         return;
     }
 
-    exitQuestion.ask('Оновлення ще виконується. Вийти й перервати поточний пакет?', (error, confirmed) => {
+    exitQuestion.ask(i18n.get().exitConfirm, (error, confirmed) => {
         if (confirmed) {
             exitApp(1);
         }
@@ -177,15 +195,9 @@ function onSettingsRequested(handler) {
 }
 
 function setSessionState({ index, total, totalInstalled, upToDateCount, toUpdateCount, ignoredCount }) {
-    const stateLine =
-        total > 0
-            ? `Стан сесії:  {bold}Оновлення ${index} з ${total}{/bold}`
-            : `Стан сесії:  {bold}Немає пакетів для оновлення{/bold}`;
-    const countsLine =
-        `Встановлено: {cyan-fg}${totalInstalled}{/cyan-fg}   ` +
-        `Актуально: {white-fg}${upToDateCount}{/white-fg}   ` +
-        `До оновлення: {green-fg}${toUpdateCount}{/green-fg}   ` +
-        `Ігнор: {yellow-fg}${ignoredCount}{/yellow-fg}`;
+    const t = i18n.get();
+    const stateLine = total > 0 ? t.sessionUpdating(index, total) : t.sessionNoPackages;
+    const countsLine = t.sessionCounts(totalInstalled, upToDateCount, toUpdateCount, ignoredCount);
 
     sessionBox.setContent(`${stateLine}\n${countsLine}`);
     screen.render();
@@ -239,7 +251,7 @@ function stopProgress() {
 }
 
 function appendResultEvent(result) {
-    const meta = STATUS_META[result.status] || { label: result.status, tag: 'white-fg', icon: ' ' };
+    const meta = statusMeta(result.status);
     const seconds = (result.durationMs / 1000).toFixed(1);
 
     eventsLog.log(
@@ -260,17 +272,13 @@ function showSummary(results, totalElapsedMs) {
     const failed = results.filter((result) => result.status === 'failed').length;
 
     appendInfoEvent('');
-    appendInfoEvent(
-        `{bold}Підсумок:{/bold} Оновлено: {green-fg}${updated}{/green-fg}  Актуально: ${upToDate}  ` +
-            `Пропущено: {yellow-fg}${skipped}{/yellow-fg}  Помилки: {red-fg}${failed}{/red-fg}  ` +
-            `Час: ${(totalElapsedMs / 1000).toFixed(1)}s`
-    );
+    appendInfoEvent(i18n.get().summaryLine(updated, upToDate, skipped, failed, (totalElapsedMs / 1000).toFixed(1)));
 }
 
 function showFatalError(message) {
     const normalizedMessage = message.replace(/\r\n/g, '\n');
 
-    operationBox.setLabel(' Помилка ');
+    operationBox.setLabel(i18n.get().errorLabel);
     operationBox.setContent(`{red-fg}${blessed.escape(normalizedMessage)}{/red-fg}`);
     screen.render();
 }

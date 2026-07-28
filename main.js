@@ -17,6 +17,7 @@ const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgr
 const settings = require('./settings');
 const consoleUi = require('./console_ui');
 const settingsUi = require('./settings_ui');
+const i18n = require('./i18n');
 const { checkForUpdate } = require('./updater');
 
 const execAsync = promisify(exec);
@@ -29,7 +30,8 @@ async function getWingetVersion() {
 
         if (major < 1 || (major === 1 && minor < 4)) {
             await logMessage(`Error: Outdated winget version (${version}). Update required.${os.EOL}`);
-            consoleUi.showFatalError(`Outdated winget version (${version}).\n\n${settings.outdatedVersionInstructions}`);
+            const t = i18n.get();
+            consoleUi.showFatalError(`${t.outdatedVersion(version)}\n\n${t.outdatedVersionInstructions}`);
             await consoleUi.waitAnyKeyOrTimeout(15000);
             consoleUi.exitApp(1);
         }
@@ -106,7 +108,7 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
 async function tryToPerformUpgrade() {
     consoleUi.init(`Winget Upgrade ${settings.appVersion}`);
     consoleUi.onSettingsRequested(() => {
-        consoleUi.appendInfoEvent('{yellow-fg}Налаштування доступні після визначення winget.{/yellow-fg}');
+        consoleUi.appendInfoEvent(i18n.get().settingsUnavailable);
     });
 
     const currentDate = settings.date;
@@ -125,7 +127,7 @@ async function tryToPerformUpgrade() {
 
         const version = await getWingetVersion();
         if (version) {
-            consoleUi.appendInfoEvent(`{green-fg}Winget ${version} is installed on the system.{/green-fg}`);
+            consoleUi.appendInfoEvent(i18n.get().wingetInstalled(version));
         } else {
             throw new Error(`Winget is not installed.`);
         }
@@ -154,9 +156,9 @@ async function tryToPerformUpgrade() {
         });
 
         if (packages.length === 0) {
-            consoleUi.appendInfoEvent('{green-fg}No updates found - everything is up to date.{/green-fg}');
+            consoleUi.appendInfoEvent(i18n.get().noUpdatesFound);
         } else {
-            consoleUi.appendInfoEvent(`{bold}Packages to update:{/bold} ${packages.map((pkg) => pkg.id).join(', ')}`);
+            consoleUi.appendInfoEvent(i18n.get().packagesToUpdate(packages.map((pkg) => pkg.id).join(', ')));
         }
 
         await delay(settings.preUpgradePauseMs);
@@ -174,17 +176,18 @@ async function tryToPerformUpgrade() {
             consoleUi.showSummary(results, totalElapsedMs);
         }
 
-        consoleUi.appendInfoEvent(settings.finalMessage.trim());
+        consoleUi.appendInfoEvent(i18n.get().finalMessage);
 
         await consoleUi.waitAnyKeyOrTimeout(10000);
         consoleUi.exitApp(0);
     } catch (error) {
+        const t = i18n.get();
         if (error.message.includes(`Winget is not installed.`)) {
             await logMessage(`Error: winget is not installed on this system.${os.EOL}`);
-            consoleUi.showFatalError(`Winget is not installed on this system.\n\n${settings.notInstalledSollutions}`);
+            consoleUi.showFatalError(`${t.wingetNotInstalled}\n\n${t.notInstalledSolutions}`);
         } else {
             await logMessage(`Unexpected error occurred: ${error.message}${os.EOL}`);
-            consoleUi.showFatalError(`Unexpected error occurred: ${error.message}`);
+            consoleUi.showFatalError(t.unexpectedError(error.message));
         }
 
         await consoleUi.waitAnyKeyOrTimeout(15000);
@@ -200,7 +203,7 @@ tryToPerformUpgrade().catch(async (error) => {
     }
 
     if (consoleUi.getScreen()) {
-        consoleUi.showFatalError(`Fatal error: ${error && error.message ? error.message : error}`);
+        consoleUi.showFatalError(i18n.get().fatalError(error && error.message ? error.message : error));
         await consoleUi.waitAnyKeyOrTimeout(15000);
         consoleUi.exitApp(1);
     } else {

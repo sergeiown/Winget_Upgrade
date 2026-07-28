@@ -3,10 +3,6 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-// The global fetch API (used by updater.js) still emits an ExperimentalWarning on first use in
-// Node 18 - noise the end user has no use for in a compiled CLI tool. Node registers its own
-// default listener that prints these regardless of any listener added with process.on(), so that
-// default listener has to be removed first, not just outvoted by adding another one.
 process.removeAllListeners('warning');
 process.on('warning', (warning) => {
     if (warning.name !== 'ExperimentalWarning') {
@@ -116,7 +112,6 @@ async function tryToPerformUpgrade() {
         try {
             stdout = (await execAsync(settings.wingetPath)).stdout;
         } catch (whereError) {
-            // where.exe found nothing - treat the same as "not installed" for the friendlier message.
             throw new Error(`Winget is not installed.`);
         }
 

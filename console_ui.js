@@ -111,9 +111,6 @@ function init(title) {
         style: { border: { fg: 'yellow' } },
     });
 
-    // Silenced while a modal owns input - blessed dispatches a keypress to both the screen-wide
-    // handler and the focused element's handler, so without this Esc would close a modal and
-    // exit the app in the same keystroke.
     screen.key(['f5'], () => {
         if (!modalOpen && skipHandler) {
             skipHandler();
@@ -263,7 +260,6 @@ function showSummary(results, totalElapsedMs) {
 }
 
 function showFatalError(message) {
-    // blessed's line-wrapping only expects \n, not os.EOL's \r\n.
     const normalizedMessage = message.replace(/\r\n/g, '\n');
 
     operationBox.setLabel(' Помилка ');

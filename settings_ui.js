@@ -103,6 +103,8 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             content: t.settingsCloseHint,
         });
 
+        const focusStyle = { focus: { bg: 'blue' } };
+
         const autostartCheckbox = blessed.checkbox({
             parent: overlay,
             top: 3,
@@ -111,6 +113,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             content: t.autostartLabel,
             mouse: true,
             checked: false,
+            style: focusStyle,
         });
 
         const languageSet = blessed.radioset({
@@ -129,6 +132,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             mouse: true,
             content: t.languageUkrainian,
             checked: i18n.getLocale() === 'uk',
+            style: focusStyle,
         });
 
         const languageEnRadio = blessed.radiobutton({
@@ -139,6 +143,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             mouse: true,
             content: t.languageEnglish,
             checked: i18n.getLocale() === 'en',
+            style: focusStyle,
         });
 
         const listLabelBox = blessed.box({
@@ -194,6 +199,25 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
 
         list.key(['space', 'enter'], toggleSelected);
 
+        const focusOrder = [autostartCheckbox, languageUkRadio, languageEnRadio, list];
+
+        function focusByOffset(offset) {
+            const currentIndex = focusOrder.indexOf(screen.focused);
+            const baseIndex = currentIndex === -1 ? 0 : currentIndex;
+            const nextIndex = (baseIndex + offset + focusOrder.length) % focusOrder.length;
+            focusOrder[nextIndex].focus();
+            screen.render();
+        }
+
+        function handleTabKey(ch, key) {
+            if (key.name !== 'tab') {
+                return;
+            }
+            focusByOffset(key.shift ? -1 : 1);
+        }
+
+        screen.on('keypress', handleTabKey);
+
         autostartCheckbox.on('check', () => {
             setAutostart(true).catch(() => {});
         });
@@ -239,6 +263,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
                 );
             } catch (error) {}
 
+            screen.removeListener('keypress', handleTabKey);
             overlay.destroy();
             screen.render();
             consoleUi.setModalOpen(false);

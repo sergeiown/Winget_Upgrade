@@ -6,7 +6,7 @@
 #define MyAppPublisher "Serhii I. Myshko"
 #define MyAppURL "https://github.com/sergeiown/Winget_Upgrade"
 #define MyAppExeName "winget_upgrade.exe"
-#define MyAppIcon "..\sagittarius.ico"
+#define MyAppIcon "..\sagittarius_1x1.ico"
 
 [Setup]
 AppId={{2A6E7B1E-6C2E-4F3E-9C7B-3B7C6A9E2D41}

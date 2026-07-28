@@ -29,7 +29,6 @@ jobs:
         with:
           bun-version: latest
 
-      # npm, not bun install, so patch-package's postinstall hook actually runs.
       - name: Install dependencies
         run: npm install
 

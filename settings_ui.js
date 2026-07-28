@@ -61,8 +61,6 @@ async function readIgnoreLines(ignoreFilePath) {
     }
 }
 
-// Only exact (case-insensitive) id matches are ours to manage - hand-written partial matches
-// like "7zip" are left untouched.
 async function applyIgnoreSelection(ignoreFilePath, checkedIds, allInstalledIds) {
     const existingLines = await readIgnoreLines(ignoreFilePath);
     const knownIds = new Set(allInstalledIds.map((id) => id.toLowerCase()));
@@ -186,9 +184,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
                     checkedOriginalIds,
                     packages.map((pkg) => pkg.id)
                 );
-            } catch (error) {
-                // Best-effort: the main screen resumes either way, nothing left to show this error on.
-            }
+            } catch (error) {}
 
             overlay.destroy();
             screen.render();

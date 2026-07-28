@@ -41,8 +41,6 @@ english.AdditionalTasksGroup=Additional tasks
 ukrainian.AutoStartTaskDescription=Запускати Winget Upgrade автоматично при вході в систему
 ukrainian.AdditionalTasksGroup=Додаткові завдання
 
-; Checked by default (no "unchecked" flag) - deliberate, see RELEASE_NOTES.md. The app's own
-; Settings screen (F2) toggles the same {userstartup} shortcut afterwards.
 [Tasks]
 Name: "autostart"; Description: "{cm:AutoStartTaskDescription}"; GroupDescription: "{cm:AdditionalTasksGroup}"
 
@@ -64,8 +62,6 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  { Give antivirus real-time scanning a moment to clear the freshly written
-    executable before the postinstall [Run] entry tries to launch it. }
   if CurStep = ssPostInstall then
     Sleep(2000);
 end;

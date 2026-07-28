@@ -12,10 +12,6 @@ const settings = require('./settings');
 
 const execAsync = promisify(exec);
 
-// winget can still show a one-time interactive Y/N prompt for a source's own terms (e.g. msstore's
-// "Terms of Transaction") even with --accept-source-agreements --disable-interactivity - seen on a
-// Windows account that had never used winget interactively before. Feeding "y" to stdin resolves
-// that prompt if it appears, and is a no-op otherwise.
 function execAcceptingPrompts(command, options) {
     const result = execAsync(command, options);
     result.child.stdin.write(`y${os.EOL}y${os.EOL}`);
@@ -27,7 +23,6 @@ function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// File-only - the TUI owns the screen now, so this never echoes to the console.
 async function logMessage(message) {
     await fs
         .appendFile(settings.logFilePath, message)
@@ -100,11 +95,6 @@ async function loadIgnoreList(ignoreFilePath) {
 
 function parseUpgradeTable(output) {
     const lines = output.split(/\r?\n/);
-    // "Available" is only present in this header when winget has something to report there -
-    // "winget upgrade" always shows it, but "winget list" only adds it when at least one listed
-    // package actually has a pending update. Requiring it unconditionally made totalInstalled
-    // silently read 0 on "winget list" output whenever nothing needed an upgrade - reproduced by
-    // upgrading everything on this machine and rerunning: real headerless is Name/Id/Version/Source.
     const headerIndex = lines.findIndex((line) => /\bId\b/.test(line) && /\bVersion\b/.test(line));
 
     if (headerIndex === -1) {
@@ -151,15 +141,12 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
 
     const execOptions = { maxBuffer: 10 * 1024 * 1024 };
 
-    // winget doesn't tolerate two of its own processes running at once (one fails with a
-    // generic "Command failed"), so these must run one after the other, not in parallel.
     const listResult = await execAcceptingPrompts(listCommand, execOptions);
     const upgradeResult = await execAcceptingPrompts(upgradeCommand, execOptions);
 
     const totalInstalled = parseUpgradeTable(listResult.stdout).length;
     const upgradable = parseUpgradeTable(upgradeResult.stdout);
 
-    // Zero installed packages is never legitimate, so dump the raw output for diagnosis.
     if (totalInstalled === 0) {
         await logMessage(
             `Diagnostic: "winget list" returned no parseable rows.${os.EOL}` +
@@ -207,8 +194,6 @@ function classifyExitCode(code) {
     return 'failed';
 }
 
-// Returns { promise, skip } rather than a bare Promise so F5 can kill the in-flight process and
-// resolve early.
 function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     const command = `"${wingetLocation}" ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
     const startedAt = Date.now();

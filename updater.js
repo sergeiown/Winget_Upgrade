@@ -14,8 +14,6 @@ const { logMessage } = require('./utils');
 
 const CHECK_TIMEOUT_MS = 8000;
 
-// No process.pkg check here - it doesn't exist under Bun. Sitting next to unins000.exe is
-// enough to tell an installed copy from a dev checkout.
 function isRunningInstalled() {
     const installDir = path.dirname(process.execPath);
     return fs.existsSync(path.join(installDir, 'unins000.exe'));
@@ -77,9 +75,6 @@ async function downloadAsset(url, destinationPath) {
 }
 
 async function installAndExit(installerPath) {
-    // Hand off to a detached .bat helper (self-deletes last) and exit immediately so Windows
-    // releases the lock on this executable before the installer tries to overwrite it. A temp
-    // file avoids the command-line quoting that caused most of this app's past self-update bugs.
     const helperPath = path.join(os.tmpdir(), 'winget_upgrade_install.bat');
     const helperScript =
         `@echo off\r\n` +

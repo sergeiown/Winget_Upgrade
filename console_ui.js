@@ -3,184 +3,314 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-const isColorEnabled = Boolean(process.stdout.isTTY);
-
-const codes = {
-    reset: '\x1b[0m',
-    bold: '\x1b[1m',
-    dim: '\x1b[2m',
-    red: '\x1b[31m',
-    green: '\x1b[32m',
-    yellow: '\x1b[33m',
-    cyan: '\x1b[36m',
-};
-
-function paint(text, ...styles) {
-    if (!isColorEnabled || text.length === 0) {
-        return text;
-    }
-    return styles.map((style) => codes[style]).join('') + text + codes.reset;
-}
+const blessed = require('neo-blessed');
 
 const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
-// winget prints no percentage at all once its stdout is piped (confirmed empirically - it only
-// emits plain status lines like "Downloading ..." / "Successfully verified installer hash"), so a
-// real byte-accurate progress bar/ETA isn't possible without a PTY layer, which this project
-// deliberately avoids as a dependency. Instead, show a live spinner with elapsed time and whatever
-// status line winget last reported - honest live feedback instead of a fabricated percentage.
-function createPackageProgressRenderer() {
-    const startedAt = Date.now();
-    let frameIndex = 0;
-    let statusText = 'Starting...';
-    let timer = null;
+const STATUS_META = {
+    updated: { label: 'Updated', tag: 'green-fg', icon: '✓' },
+    'no-update': { label: 'Up to date', tag: 'white-fg', icon: '·' },
+    failed: { label: 'Failed', tag: 'red-fg', icon: '✗' },
+    skipped: { label: 'Skipped', tag: 'yellow-fg', icon: '»' },
+};
 
-    function render() {
-        const elapsedSeconds = ((Date.now() - startedAt) / 1000).toFixed(1);
-        const line = `${paint(spinnerFrames[frameIndex], 'cyan')} ${statusText} ${paint(`(${elapsedSeconds}s)`, 'dim')}`;
-        // Padded with trailing spaces (not measured against `line.length`, which is inflated by
-        // ANSI escape codes and wouldn't reflect the actual on-screen width) so a shorter status
-        // line fully overwrites a longer previous one.
-        process.stdout.write(`\r${line}${' '.repeat(20)}`);
-        frameIndex = (frameIndex + 1) % spinnerFrames.length;
-    }
+let screen = null;
+let sessionBox = null;
+let operationBox = null;
+let progressBox = null;
+let eventsLog = null;
+let footerBox = null;
+let exitQuestion = null;
 
-    if (isColorEnabled) {
-        render();
-        timer = setInterval(render, 100);
-    }
+let progressTimer = null;
+let progressStartedAt = 0;
+let progressStatusText = '';
+let progressFrameIndex = 0;
 
-    return {
-        update(text) {
-            statusText = text;
-            if (!isColorEnabled) {
-                console.log(text);
-            }
-        },
-        stop() {
-            if (timer) {
-                clearInterval(timer);
-                timer = null;
-            }
-            process.stdout.write(`\r${' '.repeat(100)}\r`);
-        },
+let skipHandler = null;
+let settingsHandler = null;
+let upgradeInProgress = false;
+let modalOpen = false;
+
+function init(title) {
+    screen = blessed.screen({
+        smartCSR: true,
+        mouse: true,
+        fullUnicode: true,
+        dockBorders: true,
+        title: title || 'Winget Upgrade',
+    });
+
+    const boxDefaults = {
+        parent: screen,
+        left: 0,
+        width: '100%',
+        tags: true,
+        border: { type: 'line' },
+        style: { border: { fg: 'cyan' }, label: { fg: 'cyan', bold: true } },
     };
+
+    sessionBox = blessed.box(
+        Object.assign({}, boxDefaults, {
+            top: 0,
+            height: 4,
+            label: ' Winget Upgrade 3.0 ',
+            content: 'Initializing...',
+        })
+    );
+
+    operationBox = blessed.log(
+        Object.assign({}, boxDefaults, {
+            top: 4,
+            height: 10,
+            label: ' Поточна операція ',
+            scrollable: true,
+            alwaysScroll: true,
+            scrollbar: { ch: ' ', style: { bg: 'cyan' } },
+        })
+    );
+
+    progressBox = blessed.box(
+        Object.assign({}, boxDefaults, {
+            top: 14,
+            height: 3,
+            label: ' Прогрес ',
+        })
+    );
+
+    eventsLog = blessed.log(
+        Object.assign({}, boxDefaults, {
+            top: 17,
+            height: '100%-18',
+            label: ' Додатково: останні події ',
+            scrollable: true,
+            alwaysScroll: true,
+            scrollbar: { ch: ' ', style: { bg: 'cyan' } },
+        })
+    );
+
+    footerBox = blessed.box({
+        parent: screen,
+        top: '100%-1',
+        left: 0,
+        width: '100%',
+        height: 1,
+        tags: true,
+        style: { fg: 'black', bg: 'cyan' },
+        content: ' {bold}F2{/bold} Налаштування    {bold}F5{/bold} Пропустити пакет    {bold}Esc{/bold} Вихід ',
+    });
+
+    exitQuestion = blessed.question({
+        parent: screen,
+        top: 'center',
+        left: 'center',
+        width: '60%',
+        height: 6,
+        tags: true,
+        border: { type: 'line' },
+        style: { border: { fg: 'yellow' } },
+    });
+
+    // While a modal (the settings screen) owns input, the global F2/F5/Esc bindings below must
+    // stay silent - blessed dispatches a keypress to the screen-wide handlers here AND to the
+    // focused element's own handlers for the same event, regardless of which widget visually
+    // "has" it. Without this guard, Esc inside the settings screen both closes it *and* triggers
+    // this app-exit handler in the same keypress, and exit wins the race - the app closes before
+    // the settings screen's own (async) save-and-close logic ever runs.
+    screen.key(['f5'], () => {
+        if (!modalOpen && skipHandler) {
+            skipHandler();
+        }
+    });
+
+    screen.key(['f2'], () => {
+        if (!modalOpen && settingsHandler) {
+            settingsHandler();
+        }
+    });
+
+    screen.key(['escape', 'q', 'C-c'], () => {
+        if (!modalOpen) {
+            requestExit();
+        }
+    });
+
+    screen.render();
 }
 
-function createSpinner(text) {
-    let frameIndex = 0;
-    let timer = null;
-
-    function render() {
-        process.stdout.write(`\r${paint(spinnerFrames[frameIndex], 'cyan')} ${text}`);
-        frameIndex = (frameIndex + 1) % spinnerFrames.length;
-    }
-
-    function clearLine() {
-        process.stdout.write(`\r${' '.repeat(text.length + 4)}\r`);
-    }
-
-    return {
-        start() {
-            if (!isColorEnabled) {
-                console.log(`${text}...`);
-                return this;
-            }
-            render();
-            timer = setInterval(render, 100);
-            return this;
-        },
-        stop(finalLine) {
-            if (timer) {
-                clearInterval(timer);
-                timer = null;
-                clearLine();
-            }
-            if (finalLine) {
-                console.log(finalLine);
-            }
-        },
-    };
+function setModalOpen(value) {
+    modalOpen = value;
 }
 
-function printDiscoveredPackages(packages, meta = {}) {
-    console.clear();
-
-    const { totalInstalled, upToDateCount, ignoredCount } = meta;
-
-    if (typeof totalInstalled === 'number') {
-        const labelWidth = 14;
-        const rows = [
-            ['Installed:', totalInstalled, 'cyan'],
-            ['Up to date:', upToDateCount, 'dim'],
-            ['To update:', packages.length, packages.length > 0 ? 'green' : 'dim'],
-            ['Ignored:', ignoredCount, 'yellow'],
-        ];
-
-        console.log(paint('Discovery summary', 'bold', 'cyan'));
-        console.log(paint('-'.repeat('Discovery summary'.length), 'cyan'));
-        rows.forEach(([label, value, style]) => {
-            console.log(`${paint(label.padEnd(labelWidth), style)}${String(value).padStart(4)}`);
-        });
-        console.log();
-    }
-
-    if (packages.length === 0) {
-        console.log(paint('No updates found - everything is up to date.', 'green'));
-        console.log();
+function requestExit() {
+    if (!upgradeInProgress) {
+        exitApp(0);
         return;
     }
 
-    console.log(paint('Packages to update:', 'bold', 'cyan'));
-    packages.forEach((pkg) => console.log(`  - ${pkg.id}`));
-    console.log();
+    exitQuestion.ask('Оновлення ще виконується. Вийти й перервати поточний пакет?', (error, confirmed) => {
+        if (confirmed) {
+            exitApp(1);
+        }
+    });
 }
 
-function printPackageHeader(index, total, id) {
-    console.clear();
-    console.log(paint(`[${index}/${total}] Upgrading: ${id}`, 'bold', 'cyan'));
-    console.log();
-}
-
-const statusLabels = {
-    updated: paint('Updated', 'green'),
-    'no-update': paint('Up to date', 'dim'),
-    failed: paint('Failed', 'red'),
-};
-
-function printPackageResult(result) {
-    console.log(`${statusLabels[result.status]}  ${result.id}  (${(result.durationMs / 1000).toFixed(1)}s)`);
-}
-
-function printSummaryTable(results, totalElapsedMs) {
-    const updated = results.filter((result) => result.status === 'updated');
-    const noUpdate = results.filter((result) => result.status === 'no-update');
-    const failed = results.filter((result) => result.status === 'failed');
-
-    console.log();
-    console.log(paint('Upgrade summary', 'bold', 'cyan'));
-    console.log(paint('----------------', 'cyan'));
-    console.log(`${paint('Updated:', 'green')} ${updated.length}`);
-    console.log(`${paint('Up to date:', 'dim')} ${noUpdate.length}`);
-    console.log(`${paint('Failed:', 'red')} ${failed.length}`);
-
-    if (failed.length > 0) {
-        console.log();
-        console.log(paint('Failed to update:', 'red'));
-        failed.forEach((result) => console.log(`  - ${result.id}`));
+function exitApp(code) {
+    if (screen) {
+        screen.destroy();
     }
+    process.exit(code);
+}
 
-    console.log();
-    console.log(paint(`Total time: ${(totalElapsedMs / 1000).toFixed(1)}s`, 'dim'));
-    console.log();
+function getScreen() {
+    return screen;
+}
+
+function setUpgradeInProgress(value) {
+    upgradeInProgress = value;
+}
+
+function onSkipRequested(handler) {
+    skipHandler = handler;
+}
+
+function onSettingsRequested(handler) {
+    settingsHandler = handler;
+}
+
+function setSessionState({ index, total, totalInstalled, upToDateCount, toUpdateCount, ignoredCount }) {
+    const stateLine =
+        total > 0
+            ? `Стан сесії:  {bold}Оновлення ${index} з ${total}{/bold}`
+            : `Стан сесії:  {bold}Немає пакетів для оновлення{/bold}`;
+    const countsLine =
+        `Встановлено: {cyan-fg}${totalInstalled}{/cyan-fg}   ` +
+        `Актуально: {white-fg}${upToDateCount}{/white-fg}   ` +
+        `До оновлення: {green-fg}${toUpdateCount}{/green-fg}   ` +
+        `Ігнор: {yellow-fg}${ignoredCount}{/yellow-fg}`;
+
+    sessionBox.setContent(`${stateLine}\n${countsLine}`);
+    screen.render();
+}
+
+function setCurrentOperation(pkg) {
+    operationBox.setLabel(` ${blessed.escape(pkg.id)} (${blessed.escape(pkg.source)}) `);
+    operationBox.setContent('');
+    screen.render();
+}
+
+function appendOperationLine(line) {
+    operationBox.log(blessed.escape(line));
+    screen.render();
+}
+
+function renderProgress() {
+    const elapsedSeconds = ((Date.now() - progressStartedAt) / 1000).toFixed(1);
+    const frame = spinnerFrames[progressFrameIndex];
+
+    progressFrameIndex = (progressFrameIndex + 1) % spinnerFrames.length;
+    progressBox.setContent(
+        `{cyan-fg}${frame}{/cyan-fg} ${blessed.escape(progressStatusText)} {white-fg}(${elapsedSeconds}s){/white-fg}`
+    );
+    screen.render();
+}
+
+function startProgress(initialText) {
+    progressStartedAt = Date.now();
+    progressStatusText = initialText || 'Starting...';
+    progressFrameIndex = 0;
+    renderProgress();
+    progressTimer = setInterval(renderProgress, 100);
+}
+
+function updateProgressStatus(text) {
+    progressStatusText = text;
+}
+
+function stopProgress() {
+    if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+    }
+    progressBox.setContent('');
+    screen.render();
+}
+
+function appendResultEvent(result) {
+    const meta = STATUS_META[result.status] || { label: result.status, tag: 'white-fg', icon: ' ' };
+    const seconds = (result.durationMs / 1000).toFixed(1);
+
+    eventsLog.log(
+        `${meta.icon} {${meta.tag}}${meta.label.padEnd(11)}{/${meta.tag}} ${blessed.escape(result.id)}  (${seconds}s)`
+    );
+    screen.render();
+}
+
+function appendInfoEvent(text) {
+    eventsLog.log(text);
+    screen.render();
+}
+
+function showSummary(results, totalElapsedMs) {
+    const updated = results.filter((result) => result.status === 'updated').length;
+    const upToDate = results.filter((result) => result.status === 'no-update').length;
+    const skipped = results.filter((result) => result.status === 'skipped').length;
+    const failed = results.filter((result) => result.status === 'failed').length;
+
+    appendInfoEvent('');
+    appendInfoEvent(
+        `{bold}Підсумок:{/bold} Оновлено: {green-fg}${updated}{/green-fg}  Актуально: ${upToDate}  ` +
+            `Пропущено: {yellow-fg}${skipped}{/yellow-fg}  Помилки: {red-fg}${failed}{/red-fg}  ` +
+            `Час: ${(totalElapsedMs / 1000).toFixed(1)}s`
+    );
+}
+
+function showFatalError(message) {
+    // os.EOL is \r\n on Windows; blessed's own line-wrapping only expects \n, so a stray \r left
+    // in front of it renders as a visible blank artifact on some terminals.
+    const normalizedMessage = message.replace(/\r\n/g, '\n');
+
+    operationBox.setLabel(' Помилка ');
+    operationBox.setContent(`{red-fg}${blessed.escape(normalizedMessage)}{/red-fg}`);
+    screen.render();
+}
+
+function waitAnyKeyOrTimeout(ms) {
+    return new Promise((resolve) => {
+        let settled = false;
+
+        function finish() {
+            if (settled) {
+                return;
+            }
+            settled = true;
+            clearTimeout(timer);
+            screen.removeListener('keypress', finish);
+            resolve();
+        }
+
+        const timer = setTimeout(finish, ms);
+        screen.on('keypress', finish);
+    });
 }
 
 module.exports = {
-    paint,
-    createPackageProgressRenderer,
-    createSpinner,
-    printDiscoveredPackages,
-    printPackageHeader,
-    printPackageResult,
-    printSummaryTable,
+    init,
+    getScreen,
+    setSessionState,
+    setCurrentOperation,
+    appendOperationLine,
+    startProgress,
+    updateProgressStatus,
+    stopProgress,
+    appendResultEvent,
+    appendInfoEvent,
+    showSummary,
+    showFatalError,
+    onSkipRequested,
+    onSettingsRequested,
+    setUpgradeInProgress,
+    setModalOpen,
+    waitAnyKeyOrTimeout,
+    exitApp,
 };

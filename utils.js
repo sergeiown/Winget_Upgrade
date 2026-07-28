@@ -12,6 +12,17 @@ const settings = require('./settings');
 
 const execAsync = promisify(exec);
 
+// winget can still show a one-time interactive Y/N prompt for a source's own terms (e.g. msstore's
+// "Terms of Transaction") even with --accept-source-agreements --disable-interactivity - seen on a
+// Windows account that had never used winget interactively before. Feeding "y" to stdin resolves
+// that prompt if it appears, and is a no-op otherwise.
+function execAcceptingPrompts(command, options) {
+    const result = execAsync(command, options);
+    result.child.stdin.write(`y${os.EOL}y${os.EOL}`);
+    result.child.stdin.end();
+    return result;
+}
+
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -89,7 +100,12 @@ async function loadIgnoreList(ignoreFilePath) {
 
 function parseUpgradeTable(output) {
     const lines = output.split(/\r?\n/);
-    const headerIndex = lines.findIndex((line) => /\bId\b/.test(line) && /\bVersion\b/.test(line) && /\bAvailable\b/.test(line));
+    // "Available" is only present in this header when winget has something to report there -
+    // "winget upgrade" always shows it, but "winget list" only adds it when at least one listed
+    // package actually has a pending update. Requiring it unconditionally made totalInstalled
+    // silently read 0 on "winget list" output whenever nothing needed an upgrade - reproduced by
+    // upgrading everything on this machine and rerunning: real headerless is Name/Id/Version/Source.
+    const headerIndex = lines.findIndex((line) => /\bId\b/.test(line) && /\bVersion\b/.test(line));
 
     if (headerIndex === -1) {
         return [];
@@ -124,7 +140,7 @@ function parseUpgradeTable(output) {
 
 async function listInstalledPackages(wingetLocation) {
     const listCommand = `"${wingetLocation}" ${settings.wingetArgs.list.join(' ')}`;
-    const { stdout } = await execAsync(listCommand, { maxBuffer: 10 * 1024 * 1024 });
+    const { stdout } = await execAcceptingPrompts(listCommand, { maxBuffer: 10 * 1024 * 1024 });
 
     return parseUpgradeTable(stdout);
 }
@@ -137,8 +153,8 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
 
     // winget doesn't tolerate two of its own processes running at once (one fails with a
     // generic "Command failed"), so these must run one after the other, not in parallel.
-    const listResult = await execAsync(listCommand, execOptions);
-    const upgradeResult = await execAsync(upgradeCommand, execOptions);
+    const listResult = await execAcceptingPrompts(listCommand, execOptions);
+    const upgradeResult = await execAcceptingPrompts(upgradeCommand, execOptions);
 
     const totalInstalled = parseUpgradeTable(listResult.stdout).length;
     const upgradable = parseUpgradeTable(upgradeResult.stdout);
@@ -199,6 +215,9 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     const logStream = createWriteStream(logFilePath, { flags: 'a' });
     const childProcess = exec(command);
     let skipped = false;
+
+    childProcess.stdin.write(`y${os.EOL}y${os.EOL}`);
+    childProcess.stdin.end();
 
     childProcess.stdout.on('data', (data) => {
         const text = data.toString();

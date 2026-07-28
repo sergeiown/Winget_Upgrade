@@ -136,6 +136,10 @@ function setModalOpen(value) {
     modalOpen = value;
 }
 
+function isModalOpen() {
+    return modalOpen;
+}
+
 function requestExit() {
     if (!upgradeInProgress) {
         exitApp(0);
@@ -199,6 +203,10 @@ function appendOperationLine(line) {
 }
 
 function renderProgress() {
+    if (modalOpen) {
+        return;
+    }
+
     const elapsedSeconds = ((Date.now() - progressStartedAt) / 1000).toFixed(1);
     const frame = spinnerFrames[progressFrameIndex];
 
@@ -270,9 +278,10 @@ function showFatalError(message) {
 function waitAnyKeyOrTimeout(ms) {
     return new Promise((resolve) => {
         let settled = false;
+        let timer = null;
 
         function finish() {
-            if (settled) {
+            if (settled || modalOpen) {
                 return;
             }
             settled = true;
@@ -281,7 +290,17 @@ function waitAnyKeyOrTimeout(ms) {
             resolve();
         }
 
-        const timer = setTimeout(finish, ms);
+        function armTimer() {
+            timer = setTimeout(() => {
+                if (modalOpen) {
+                    armTimer();
+                    return;
+                }
+                finish();
+            }, ms);
+        }
+
+        armTimer();
         screen.on('keypress', finish);
     });
 }
@@ -303,6 +322,7 @@ module.exports = {
     onSettingsRequested,
     setUpgradeInProgress,
     setModalOpen,
+    isModalOpen,
     waitAnyKeyOrTimeout,
     exitApp,
 };

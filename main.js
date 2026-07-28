@@ -55,12 +55,20 @@ function openSettingsScreen(wingetLocation) {
         });
 }
 
+async function waitWhileModalOpen() {
+    while (consoleUi.isModalOpen()) {
+        await delay(200);
+    }
+}
+
 async function runUpgrades(wingetLocation, packages, discoveryMeta) {
     const results = [];
     const overallStartedAt = Date.now();
 
     for (let index = 0; index < packages.length; index++) {
         const pkg = packages[index];
+
+        await waitWhileModalOpen();
 
         consoleUi.setSessionState({
             index: index + 1,
@@ -166,7 +174,7 @@ async function tryToPerformUpgrade() {
             consoleUi.showSummary(results, totalElapsedMs);
         }
 
-        consoleUi.appendInfoEvent(`{dim}${settings.finalMessage.trim()}{/dim}`);
+        consoleUi.appendInfoEvent(settings.finalMessage.trim());
 
         await consoleUi.waitAnyKeyOrTimeout(10000);
         consoleUi.exitApp(0);

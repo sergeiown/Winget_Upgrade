@@ -217,6 +217,8 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
 
             listLabelBox.setContent(` Пакети (${packages.length}) - позначені записуються у ${path.basename(ignoreFilePath)}`);
             renderList();
+            list.items.forEach((item) => item.on('click', toggleSelected));
+            screen.render();
         })();
     });
 }

@@ -1,0 +1,14 @@
+{
+    "name": "winget_upgrade",
+    "version": "2.1.6",
+    "main": "main.js",
+    "scripts": {
+        "postinstall": "patch-package"
+    },
+    "dependencies": {
+        "neo-blessed": "^0.2.0"
+    },
+    "devDependencies": {
+        "patch-package": "^8.0.1"
+    }
+}

@@ -54,7 +54,7 @@ function init(title) {
         Object.assign({}, boxDefaults, {
             top: 0,
             height: 4,
-            label: ' Winget Upgrade 3.0 ',
+            label: ` ${title || 'Winget Upgrade'} `,
             content: 'Initializing...',
         })
     );

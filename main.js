@@ -44,6 +44,7 @@ async function getWingetVersion() {
 }
 
 let settingsOpen = false;
+let restartRequested = false;
 
 function openSettingsScreen(wingetLocation) {
     if (settingsOpen) {
@@ -52,6 +53,11 @@ function openSettingsScreen(wingetLocation) {
     settingsOpen = true;
     settingsUi
         .open(consoleUi.getScreen(), { wingetLocation, ignoreFilePath: settings.ignoreFilePath })
+        .then((result) => {
+            if (result && result.ignoreListChanged) {
+                restartRequested = true;
+            }
+        })
         .finally(() => {
             settingsOpen = false;
         });
@@ -71,6 +77,10 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
         const pkg = packages[index];
 
         await waitWhileModalOpen();
+
+        if (restartRequested) {
+            break;
+        }
 
         consoleUi.setSessionState({
             index: index + 1,
@@ -106,7 +116,7 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
 }
 
 async function tryToPerformUpgrade() {
-    consoleUi.init(`Winget Upgrade ${settings.appVersion}`);
+    consoleUi.init('Winget Upgrade', `Winget Upgrade ${settings.appVersion}`);
     consoleUi.onSettingsRequested(() => {
         consoleUi.appendInfoEvent(i18n.get().settingsUnavailable);
     });
@@ -137,49 +147,64 @@ async function tryToPerformUpgrade() {
         const wingetLocation = stdout.trim();
         consoleUi.onSettingsRequested(() => openSettingsScreen(wingetLocation));
 
-        const { packages, totalInstalled, upToDateCount, ignoredCount } = await discoverUpgradablePackages(
-            wingetLocation,
-            settings.ignoreFilePath
-        );
+        for (;;) {
+            restartRequested = false;
 
-        await logMessage(
-            `Checked ${totalInstalled} installed package(s): ${upToDateCount} up to date, ${packages.length} to update, ${ignoredCount} ignored.${os.EOL}`
-        );
+            const { packages, totalInstalled, upToDateCount, ignoredCount } = await discoverUpgradablePackages(
+                wingetLocation,
+                settings.ignoreFilePath
+            );
 
-        consoleUi.setSessionState({
-            index: 0,
-            total: packages.length,
-            totalInstalled,
-            upToDateCount,
-            toUpdateCount: packages.length,
-            ignoredCount,
-        });
+            await logMessage(
+                `Checked ${totalInstalled} installed package(s): ${upToDateCount} up to date, ${packages.length} to update, ${ignoredCount} ignored.${os.EOL}`
+            );
 
-        if (packages.length === 0) {
-            consoleUi.appendInfoEvent(i18n.get().noUpdatesFound);
-        } else {
-            consoleUi.appendInfoEvent(i18n.get().packagesToUpdate(packages.map((pkg) => pkg.id).join(', ')));
+            consoleUi.setSessionState({
+                index: 0,
+                total: packages.length,
+                totalInstalled,
+                upToDateCount,
+                toUpdateCount: packages.length,
+                ignoredCount,
+            });
+
+            if (packages.length === 0) {
+                consoleUi.appendInfoEvent(i18n.get().noUpdatesFound);
+            } else {
+                consoleUi.appendInfoEvent(i18n.get().packagesToUpdate(packages.map((pkg) => pkg.id).join(', ')));
+            }
+
+            await delay(settings.preUpgradePauseMs);
+
+            const { results, totalElapsedMs } = await runUpgrades(wingetLocation, packages, {
+                totalInstalled,
+                upToDateCount,
+                ignoredCount,
+            });
+
+            if (restartRequested) {
+                consoleUi.appendInfoEvent(i18n.get().restartingSession);
+                continue;
+            }
+
+            await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
+            await logMessage(settings.finalLogMessage);
+
+            if (results.length > 0) {
+                consoleUi.showSummary(results, totalElapsedMs);
+            }
+
+            consoleUi.appendInfoEvent(i18n.get().finalMessage);
+
+            await consoleUi.waitAnyKeyOrTimeout(10000);
+
+            if (restartRequested) {
+                consoleUi.appendInfoEvent(i18n.get().restartingSession);
+                continue;
+            }
+
+            consoleUi.exitApp(0);
         }
-
-        await delay(settings.preUpgradePauseMs);
-
-        const { results, totalElapsedMs } = await runUpgrades(wingetLocation, packages, {
-            totalInstalled,
-            upToDateCount,
-            ignoredCount,
-        });
-
-        await checkAndTrimLogFile(settings.logFilePath, settings.maxLogFileSize);
-        await logMessage(settings.finalLogMessage);
-
-        if (results.length > 0) {
-            consoleUi.showSummary(results, totalElapsedMs);
-        }
-
-        consoleUi.appendInfoEvent(i18n.get().finalMessage);
-
-        await consoleUi.waitAnyKeyOrTimeout(10000);
-        consoleUi.exitApp(0);
     } catch (error) {
         const t = i18n.get();
         if (error.message.includes(`Winget is not installed.`)) {

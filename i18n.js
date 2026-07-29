@@ -33,6 +33,7 @@ const STRINGS = {
         wingetInstalled: (version) => `{green-fg}Winget ${version} is installed on the system.{/green-fg}`,
         noUpdatesFound: '{green-fg}No updates found - everything is up to date.{/green-fg}',
         packagesToUpdate: (ids) => `{bold}Packages to update:{/bold} ${ids}`,
+        restartingSession: '{yellow-fg}Ignore list changed - restarting the session...{/yellow-fg}',
         wingetNotInstalled: 'Winget is not installed on this system.',
         notInstalledSolutions: `Possible solutions:
 1. Make sure that winget is installed on your system and that its location is
@@ -98,6 +99,7 @@ const STRINGS = {
         wingetInstalled: (version) => `{green-fg}Winget ${version} встановлено в системі.{/green-fg}`,
         noUpdatesFound: '{green-fg}Оновлень не знайдено - все актуально.{/green-fg}',
         packagesToUpdate: (ids) => `{bold}Пакети для оновлення:{/bold} ${ids}`,
+        restartingSession: '{yellow-fg}Список ігнорування змінено - перезапуск сесії...{/yellow-fg}',
         wingetNotInstalled: 'Winget не встановлено в цій системі.',
         notInstalledSolutions: `Можливі рішення:
 1. Переконайтеся, що winget встановлено у вашій системі і його розташування

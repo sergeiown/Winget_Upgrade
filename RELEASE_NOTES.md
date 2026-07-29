@@ -27,6 +27,10 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Changing the ignore list from the settings screen now restarts the current session (fresh discovery and a fresh upgrade queue) instead of finishing out the stale pre-edit package list.
+- [x] Fixed the "current operation" panel's text overflowing past its own border once it had more lines than fit - it now keeps only as many lines as the panel can actually show instead of relying on the underlying widget's own scrolling.
+- [x] The terminal window title is now just "Winget Upgrade" - the version number was already shown inside the app itself, so the title bar was duplicating it.
+- [x] Confirming "yes" on the still-running-upgrade exit prompt now exits with code 0, not 1 - some terminals (e.g. Windows Terminal's default close-on-exit setting) only auto-close the window on a zero exit code, so the window could stay open after a deliberate, successful exit.
 - [x] Fixed all-zero counters again on non-English-locale systems: the previous header fix still matched against the literal English column names ("Id", "Version"), which winget itself localizes (e.g. "ИД", "Версия" on a Russian-locale machine). Header detection now locates the (unlocalized) row of dashes below the header and reads column positions from the header's word order instead of specific label text - confirmed against a real Russian-locale log.
 - [x] Added a settings-screen language switch (Ukrainian / English, applied immediately) and made the interface follow Windows' system language by default.
 - [x] Fixed a crash on every single launch of the compiled binary: a terminal-capability fallback read a data file via a path that only existed on the machine that built it (visible only once the app was actually installed and run somewhere else - not on the machine that built it). Confirmed fixed with a real install-and-self-update cycle.

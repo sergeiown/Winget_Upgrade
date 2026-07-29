@@ -27,6 +27,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Fixed a bogus "package" (id just a stray number and a period) showing up and failing during upgrades: winget's own trailing summary line ("N upgrades available.") was being parsed as a table row on some locales once the actual English/Russian column text stopped being what excluded it. The parser now stops at the blank line that separates the table from that summary instead of skipping past it, which also removes the last bit of English-specific text matching from the whole parser.
 - [x] Changing the ignore list from the settings screen now restarts the current session (fresh discovery and a fresh upgrade queue) instead of finishing out the stale pre-edit package list.
 - [x] Fixed the "current operation" panel's text overflowing past its own border once it had more lines than fit - it now keeps only as many lines as the panel can actually show instead of relying on the underlying widget's own scrolling.
 - [x] The terminal window title is now just "Winget Upgrade" - the version number was already shown inside the app itself, so the title bar was duplicating it.

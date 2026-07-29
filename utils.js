@@ -95,22 +95,35 @@ async function loadIgnoreList(ignoreFilePath) {
 
 function parseUpgradeTable(output) {
     const lines = output.split(/\r?\n/);
-    const headerIndex = lines.findIndex((line) => /\bId\b/.test(line) && /\bVersion\b/.test(line));
 
-    if (headerIndex === -1) {
+    // winget localizes the header text (Name/Id/Version/Available/Source become e.g.
+    // Имя/ИД/Версия/Доступно/Источник on a Russian-locale system, etc.), so matching against the
+    // English column names only worked in English locales. The row of dashes right below the
+    // header is not localized and always spans the header's full width - find that instead, then
+    // read column positions from the header's own word boundaries (Name, Id, Version, [Available,]
+    // Source - a fixed order regardless of language) rather than from specific label text.
+    const separatorIndex = lines.findIndex((line) => /^-{5,}\s*$/.test(line));
+
+    if (separatorIndex <= 0) {
         return [];
     }
 
-    const header = lines[headerIndex];
-    const idStart = header.indexOf('Id');
-    const versionStart = header.indexOf('Version');
-    const sourceStart = header.indexOf('Source');
+    const header = lines[separatorIndex - 1];
+    const columns = [...header.matchAll(/\S+/g)];
+
+    if (columns.length < 4) {
+        return [];
+    }
+
+    const idStart = columns[1].index;
+    const versionStart = columns[2].index;
+    const sourceStart = columns[columns.length - 1].index;
     const packages = [];
 
-    for (let index = headerIndex + 2; index < lines.length; index++) {
+    for (let index = separatorIndex + 1; index < lines.length; index++) {
         const line = lines[index];
 
-        if (!line.trim() || /^-+$/.test(line) || /^\d+ upgrades? available\.?$/i.test(line)) {
+        if (!line.trim() || /^-+$/.test(line)) {
             continue;
         }
         if (line.length < idStart) {

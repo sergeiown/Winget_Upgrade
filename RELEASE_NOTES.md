@@ -27,6 +27,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Fixed all-zero counters again on non-English-locale systems: the previous header fix still matched against the literal English column names ("Id", "Version"), which winget itself localizes (e.g. "ИД", "Версия" on a Russian-locale machine). Header detection now locates the (unlocalized) row of dashes below the header and reads column positions from the header's word order instead of specific label text - confirmed against a real Russian-locale log.
 - [x] Added a settings-screen language switch (Ukrainian / English, applied immediately) and made the interface follow Windows' system language by default.
 - [x] Fixed a crash on every single launch of the compiled binary: a terminal-capability fallback read a data file via a path that only existed on the machine that built it (visible only once the app was actually installed and run somewhere else - not on the machine that built it). Confirmed fixed with a real install-and-self-update cycle.
 - [x] Fixed a real bug where every counter (installed / up to date / to update) could silently read zero: the table-header detection required a column ("Available") that `winget list` only shows when at least one package actually has a pending update. Reproduced directly and confirmed fixed.

@@ -96,12 +96,6 @@ async function loadIgnoreList(ignoreFilePath) {
 function parseUpgradeTable(output) {
     const lines = output.split(/\r?\n/);
 
-    // winget localizes the header text (Name/Id/Version/Available/Source become e.g.
-    // Имя/ИД/Версия/Доступно/Источник on a Russian-locale system, etc.), so matching against the
-    // English column names only worked in English locales. The row of dashes right below the
-    // header is not localized and always spans the header's full width - find that instead, then
-    // read column positions from the header's own word boundaries (Name, Id, Version, [Available,]
-    // Source - a fixed order regardless of language) rather than from specific label text.
     const separatorIndex = lines.findIndex((line) => /^-{5,}\s*$/.test(line));
 
     if (separatorIndex <= 0) {
@@ -123,10 +117,10 @@ function parseUpgradeTable(output) {
     for (let index = separatorIndex + 1; index < lines.length; index++) {
         const line = lines[index];
 
-        if (!line.trim() || /^-+$/.test(line)) {
-            continue;
+        if (!line.trim()) {
+            break;
         }
-        if (line.length < idStart) {
+        if (/^-+$/.test(line) || line.length < idStart) {
             break;
         }
 

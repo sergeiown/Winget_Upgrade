@@ -93,6 +93,16 @@ async function loadIgnoreList(ignoreFilePath) {
         .filter((line) => line.length > 0 && !line.startsWith('#'));
 }
 
+function isColumnBoundary(line, position) {
+    if (position <= 0) {
+        return true;
+    }
+    if (position >= line.length) {
+        return false;
+    }
+    return /\s/.test(line[position - 1]);
+}
+
 function parseUpgradeTable(output) {
     const lines = output.split(/\r?\n/);
 
@@ -122,6 +132,9 @@ function parseUpgradeTable(output) {
         }
         if (/^-+$/.test(line) || line.length < idStart) {
             break;
+        }
+        if (!isColumnBoundary(line, idStart) || !isColumnBoundary(line, versionStart)) {
+            continue;
         }
 
         const id = line.substring(idStart, versionStart).trim();
@@ -159,6 +172,14 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
             `Diagnostic: "winget list" returned no parseable rows.${os.EOL}` +
                 `stdout (first 1000 chars): ${listResult.stdout.slice(0, 1000)}${os.EOL}` +
                 `stderr (first 1000 chars): ${listResult.stderr.slice(0, 1000)}${os.EOL}`
+        );
+    }
+
+    if (upgradable.some((pkg) => !/[a-zA-Z]/.test(pkg.id))) {
+        await logMessage(
+            `Diagnostic: "winget upgrade" produced a package id with no letters at all (likely a misparsed row).${os.EOL}` +
+                `Parsed: ${JSON.stringify(upgradable)}${os.EOL}` +
+                `stdout (first 1500 chars): ${upgradeResult.stdout.slice(0, 1500)}${os.EOL}`
         );
     }
 

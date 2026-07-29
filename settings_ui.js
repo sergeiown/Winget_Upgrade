@@ -175,6 +175,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
         const checkedIds = new Set();
         let packages = [];
         let closed = false;
+        let initialCheckedIds = null;
 
         function renderList() {
             const selectedIndex = list.selected;
@@ -254,6 +255,9 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             closed = true;
 
             const checkedOriginalIds = packages.filter((pkg) => checkedIds.has(pkg.id.toLowerCase())).map((pkg) => pkg.id);
+            const ignoreListChanged =
+                initialCheckedIds !== null &&
+                (checkedIds.size !== initialCheckedIds.size || [...checkedIds].some((id) => !initialCheckedIds.has(id)));
 
             try {
                 await applyIgnoreSelection(
@@ -267,7 +271,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             overlay.destroy();
             screen.render();
             consoleUi.setModalOpen(false);
-            resolve();
+            resolve({ ignoreListChanged });
         }
 
         overlay.key(['escape'], close);
@@ -292,6 +296,8 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
                     checkedIds.add(pkg.id.toLowerCase());
                 }
             });
+
+            initialCheckedIds = new Set(checkedIds);
 
             listLabelBox.setContent(i18n.get().packagesCount(packages.length, path.basename(ignoreFilePath)));
             renderList();

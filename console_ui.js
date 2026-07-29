@@ -37,6 +37,11 @@ let settingsHandler = null;
 let upgradeInProgress = false;
 let modalOpen = false;
 
+let operationLines = [];
+let eventLines = [];
+
+const OPERATION_BOX_HEIGHT = 10;
+
 function applyLocaleToChrome() {
     const t = i18n.get();
     operationBox.setLabel(t.operationLabel);
@@ -46,13 +51,13 @@ function applyLocaleToChrome() {
     screen.render();
 }
 
-function init(title) {
+function init(windowTitle, boxLabel) {
     screen = blessed.screen({
         smartCSR: true,
         mouse: true,
         fullUnicode: true,
         dockBorders: true,
-        title: title || 'Winget Upgrade',
+        title: windowTitle || 'Winget Upgrade',
     });
 
     const t = i18n.get();
@@ -70,7 +75,7 @@ function init(title) {
         Object.assign({}, boxDefaults, {
             top: 0,
             height: 4,
-            label: ` ${title || 'Winget Upgrade'} `,
+            label: ` ${boxLabel || windowTitle || 'Winget Upgrade'} `,
             content: 'Initializing...',
         })
     );
@@ -166,7 +171,7 @@ function requestExit() {
 
     exitQuestion.ask(i18n.get().exitConfirm, (error, confirmed) => {
         if (confirmed) {
-            exitApp(1);
+            exitApp(0);
         }
     });
 }
@@ -205,12 +210,17 @@ function setSessionState({ index, total, totalInstalled, upToDateCount, toUpdate
 
 function setCurrentOperation(pkg) {
     operationBox.setLabel(` ${blessed.escape(pkg.id)} (${blessed.escape(pkg.source)}) `);
+    operationLines = [];
     operationBox.setContent('');
     screen.render();
 }
 
 function appendOperationLine(line) {
-    operationBox.log(blessed.escape(line));
+    const visibleRows = Math.max(1, OPERATION_BOX_HEIGHT - 2);
+
+    operationLines.push(blessed.escape(line));
+    operationLines = operationLines.slice(-visibleRows);
+    operationBox.setContent(operationLines.join('\n'));
     screen.render();
 }
 
@@ -250,19 +260,27 @@ function stopProgress() {
     screen.render();
 }
 
+function appendEventLine(text) {
+    const resolvedHeight = typeof eventsLog.height === 'number' ? eventsLog.height : 20;
+    const visibleRows = Math.max(1, resolvedHeight - 2);
+
+    eventLines.push(text);
+    eventLines = eventLines.slice(-visibleRows);
+    eventsLog.setContent(eventLines.join('\n'));
+    screen.render();
+}
+
 function appendResultEvent(result) {
     const meta = statusMeta(result.status);
     const seconds = (result.durationMs / 1000).toFixed(1);
 
-    eventsLog.log(
+    appendEventLine(
         `${meta.icon} {${meta.tag}}${meta.label.padEnd(11)}{/${meta.tag}} ${blessed.escape(result.id)}  (${seconds}s)`
     );
-    screen.render();
 }
 
 function appendInfoEvent(text) {
-    eventsLog.log(text);
-    screen.render();
+    appendEventLine(text);
 }
 
 function showSummary(results, totalElapsedMs) {

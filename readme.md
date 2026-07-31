@@ -2,7 +2,7 @@
 
 [![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE) [![Release](https://img.shields.io/github/v/release/sergeiown/Winget_Upgrade)](https://github.com/sergeiown/Winget_Upgrade/releases/latest) [![Build](https://github.com/sergeiown/Winget_Upgrade/actions/workflows/release.yml/badge.svg)](https://github.com/sergeiown/Winget_Upgrade/actions/workflows/release.yml)
 
-**[EN](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme.md)** | [UA](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme_ua.md)
+[![English](https://img.shields.io/badge/-English-blue)](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme.md) [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](https://github.com/sergeiown/Winget_Upgrade/blob/main/readme_ua.md)
 
 Winget Upgrade is a Node.js command line tool that automates the process of updating software on your computer using Windows Package Manager ([Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)).
 

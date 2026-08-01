@@ -283,6 +283,11 @@ function stopProgress() {
     screen.render();
 }
 
+function setCountdownDisplay(text) {
+    progressBox.setContent(text || '');
+    screen.render();
+}
+
 function appendEventLine(text) {
     const resolvedHeight = typeof eventsLog.height === 'number' ? eventsLog.height : 20;
     const visibleRows = Math.max(1, resolvedHeight - 2);
@@ -324,33 +329,62 @@ function showFatalError(message) {
     screen.render();
 }
 
-function waitAnyKeyOrTimeout(ms) {
+function waitAnyKeyOrTimeout(ms, onTick) {
     return new Promise((resolve) => {
         let settled = false;
         let timer = null;
+        let remainingMs = ms;
+        let pausedForModal = false;
 
         function finish() {
-            if (settled || modalOpen) {
+            if (settled) {
                 return;
             }
             settled = true;
-            clearTimeout(timer);
-            screen.removeListener('keypress', finish);
+            if (timer) {
+                clearInterval(timer);
+            }
+            screen.removeListener('keypress', handleKeypress);
             resolve();
         }
 
-        function armTimer() {
-            timer = setTimeout(() => {
-                if (modalOpen) {
-                    armTimer();
-                    return;
-                }
-                finish();
-            }, ms);
+        function handleKeypress(ch, key) {
+            if (modalOpen || (key && key.name === 'f2')) {
+                return;
+            }
+            finish();
         }
 
-        armTimer();
-        screen.on('keypress', finish);
+        function tick() {
+            if (modalOpen) {
+                pausedForModal = true;
+                return;
+            }
+            if (pausedForModal) {
+                pausedForModal = false;
+                remainingMs = ms;
+                if (onTick) {
+                    onTick(Math.ceil(remainingMs / 1000));
+                }
+                return;
+            }
+            remainingMs -= 1000;
+            if (onTick) {
+                onTick(Math.max(0, Math.ceil(remainingMs / 1000)));
+            }
+            if (remainingMs <= 0) {
+                finish();
+            }
+        }
+
+        if (ms != null) {
+            if (onTick) {
+                onTick(Math.ceil(remainingMs / 1000));
+            }
+            timer = setInterval(tick, 1000);
+        }
+
+        screen.on('keypress', handleKeypress);
     });
 }
 
@@ -363,6 +397,7 @@ module.exports = {
     startProgress,
     updateProgressStatus,
     stopProgress,
+    setCountdownDisplay,
     appendResultEvent,
     appendInfoEvent,
     showSummary,

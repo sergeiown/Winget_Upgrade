@@ -13,6 +13,7 @@ const consoleUi = require('./console_ui');
 const i18n = require('./i18n');
 const { listInstalledPackages, escapeForPowerShellSingleQuotes } = require('./utils');
 const wingetSettings = require('./winget_settings');
+const appSettings = require('./app_settings');
 
 const execAsync = promisify(exec);
 
@@ -221,6 +222,32 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
                 },
             },
             blankRow(),
+            { header: true, getText: () => i18n.get().autoCloseLabel },
+            {
+                type: 'radio',
+                groupId: 'autoClose',
+                value: 'never',
+                label: t.autoCloseNever,
+                getSelectedValue: () => appSettings.getAutoClose(),
+                onSelect: (value) => appSettings.setAutoClose(value),
+            },
+            {
+                type: 'radio',
+                groupId: 'autoClose',
+                value: '30',
+                label: t.autoClose30,
+                getSelectedValue: () => appSettings.getAutoClose(),
+                onSelect: (value) => appSettings.setAutoClose(value),
+            },
+            {
+                type: 'radio',
+                groupId: 'autoClose',
+                value: '60',
+                label: t.autoClose60,
+                getSelectedValue: () => appSettings.getAutoClose(),
+                onSelect: (value) => appSettings.setAutoClose(value),
+            },
+            blankRow(),
         ];
 
         if (!wingetAvailable) {
@@ -358,8 +385,8 @@ function buildIgnoreTab({ parent, screen, wingetLocation, ignoreFilePath }) {
         screen.render();
     }
 
-    function buildRows() {
-        return filteredPackages().map((pkg) => ({
+    function toRow(pkg) {
+        return {
             type: 'checkbox',
             label: pkg.id,
             getChecked: () => checkedIds.has(pkg.id.toLowerCase()),
@@ -371,8 +398,26 @@ function buildIgnoreTab({ parent, screen, wingetLocation, ignoreFilePath }) {
                     checkedIds.delete(key);
                 }
                 updateLabel();
+                setRows(buildRows());
             },
-        }));
+        };
+    }
+
+    function buildRows() {
+        const filtered = filteredPackages();
+        const selected = filtered.filter((pkg) => checkedIds.has(pkg.id.toLowerCase()));
+        const rest = filtered.filter((pkg) => !checkedIds.has(pkg.id.toLowerCase()));
+        const rows = [];
+
+        if (selected.length > 0) {
+            rows.push({ header: true, getText: () => i18n.get().ignoredPackagesLabel(selected.length) });
+            rows.push(...selected.map(toRow));
+            rows.push(blankRow());
+            rows.push({ header: true, getText: () => i18n.get().allPackagesLabel });
+        }
+
+        rows.push(...rest.map(toRow));
+        return rows;
     }
 
     function applyLocale() {
@@ -407,10 +452,11 @@ function buildIgnoreTab({ parent, screen, wingetLocation, ignoreFilePath }) {
         ]);
 
         packages = installedPackages;
-        const ignoredIdSet = new Set(ignoreLines.map((line) => line.trim().toLowerCase()));
+        const ignoreEntries = ignoreLines.map((line) => line.trim()).filter((line) => line.length > 0 && !line.startsWith('#'));
         packages.forEach((pkg) => {
-            if (ignoredIdSet.has(pkg.id.toLowerCase())) {
-                checkedIds.add(pkg.id.toLowerCase());
+            const lowerId = pkg.id.toLowerCase();
+            if (ignoreEntries.some((entry) => lowerId.includes(entry.toLowerCase()))) {
+                checkedIds.add(lowerId);
             }
         });
 

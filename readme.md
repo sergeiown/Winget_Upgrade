@@ -38,10 +38,10 @@ The program runs as a full-screen console UI (not a scrolling log) with dedicate
 The interface text is in Ukrainian when Windows' system language is Ukrainian, and in English otherwise; this can be changed at any time from the settings screen (see below).
 
 ### 4. Settings screen
-Press `F2` at any time to open the settings screen:
-- **Autostart** - a checkbox that creates or removes a shortcut in the Windows Startup folder, so the "run at sign-in" behavior can be turned on or off without reinstalling.
-- **Ignore list** - a scrollable, checkable list of every installed package; checking one adds its exact identifier to `winget_ignore.txt`, unchecking removes it. Entries you've added by hand (partial matches like `chrome`) are left untouched.
-- **Language** - switch between Ukrainian and English; takes effect immediately, no restart needed.
+Press `F2` once winget has been detected (the key is disabled and shown dimmed until then) to open the settings screen. It has three tabs, switched with `←`/`→`; within a tab, `↑`/`↓` moves between options and `Enter`/`Space` changes the highlighted one:
+- **General** - autostart (creates or removes a shortcut in the Windows Startup folder), the language switch (Ukrainian/English, takes effect immediately), and a curated subset of winget's own configuration: install scope (current user or entire machine), whether install notes are shown, whether winget's interactive prompts are allowed, and the maximum resume-attempt count. These are written directly to winget's own `settings.json`.
+- **Ignore list** - a scrollable, checkable list of every installed package with a live incremental search (just start typing to filter) and a "selected of total" counter; checking a package adds its exact identifier to `winget_ignore.txt`, unchecking removes it. Entries you've added by hand (partial matches like `chrome`) are left untouched.
+- **Advanced** - two administrator-gated winget overrides: skipping the malware scan for local archive installers, and continuing an install when the installer hash doesn't match. Turning either on triggers a real Windows elevation (UAC) prompt; the on-screen state is always re-read from winget afterward rather than assumed.
 
 ### 5. Logging.
 The program keeps a log of events in the file `winget_upgrade.log`, which stores information about:

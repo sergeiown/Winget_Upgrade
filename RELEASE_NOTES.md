@@ -9,7 +9,9 @@
 
 - **Discovery-first Upgrades**: Uses `winget upgrade` to find only the packages that actually have an update available, filters out anything on the ignore list, reports how many packages are installed in total (up to date / to update / ignored - even when there's nothing to do), pauses briefly, then upgrades each package individually via `winget upgrade --id`.
 
-- **Full-screen Console UI**: Dedicated panels for session state, the current operation, live progress, and a scrolling event log, plus a settings screen (`F2`) with an autostart checkbox, a checkbox list of every installed package for the ignore list, and a language switch. `F5` skips the package currently upgrading; `Esc` exits (with confirmation if an upgrade is still running).
+- **Full-screen Console UI**: Dedicated panels for session state, the current operation, live progress, and a scrolling event log. `F5` skips the package currently upgrading; `Esc` exits (with confirmation if an upgrade is still running).
+
+- **Settings Screen**: `F2` opens a tabbed settings screen (General / Ignore list / Advanced), navigated entirely with arrow keys and Enter/Space - autostart, language, install scope, install notes, interactive prompts, max resume attempts, and a searchable, live-filtered ignore list with a selected/total counter. An Advanced tab manages two administrator-gated winget overrides (local-archive malware scan bypass, installer hash mismatch bypass), each requesting Windows elevation (UAC) when turned on.
 
 - **Ukrainian / English UI**: The interface language follows Windows' system language (Ukrainian if the system is set to Ukrainian, English otherwise) and can be changed at any time from the settings screen - no restart needed.
 
@@ -27,6 +29,10 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Settings screen now also manages a subset of winget's own configuration: install scope (current user / entire machine), whether install notes are shown, whether winget's interactive prompts are allowed, and the maximum resume-attempt count - written directly to winget's `settings.json`. An Advanced tab adds two administrator-gated overrides (skip malware scan for local archive installers, continue on installer hash mismatch), each triggering a real Windows elevation (UAC) prompt when turned on, with the on-screen state always resynced from winget itself afterward rather than assumed.
+- [x] Settings screen redesigned around three tabs (General, Ignore list, Advanced) navigated purely with arrow keys, Enter/Space, and Left/Right for tabs - replacing the previous fixed checkbox/radio layout that had inconsistent keyboard/mouse behavior. The ignore list gained live incremental search (just start typing) and now shows how many packages are selected out of the total instead of just a raw count.
+- [x] Fixed long package ids and winget status lines overflowing past the edge of the "current operation" and "progress" panels - both now truncate to the terminal's actual width with an ellipsis instead of being cut off mid-character or wrapping unpredictably.
+- [x] `F2` (Settings) is now visibly de-emphasized in the footer and does nothing at all until winget is actually detected, instead of silently failing or showing a one-off message.
 - [x] Fixed the same bogus-trailing-summary-line problem again on a table narrow enough that the blank-line check wasn't reached: real table rows are now also required to have their Id/Version columns start exactly at a word boundary (matching the header's own column layout), which winget's summary sentence never does - this holds regardless of table width, blank lines, or language.
 - [x] Fixed a bogus "package" (id just a stray number and a period) showing up and failing during upgrades: winget's own trailing summary line ("N upgrades available.") was being parsed as a table row on some locales once the actual English/Russian column text stopped being what excluded it. The parser now stops at the blank line that separates the table from that summary instead of skipping past it, which also removes the last bit of English-specific text matching from the whole parser.
 - [x] Changing the ignore list from the settings screen now restarts the current session (fresh discovery and a fresh upgrade queue) instead of finishing out the stale pre-edit package list.

@@ -35,7 +35,7 @@
   </style>
 
   <rect x="0" y="0" width="1100" height="920" rx="16" class="frame" stroke-width="1.5"/>
-  <text x="550" y="34" text-anchor="middle" font-size="18" font-weight="700" class="title">Winget Upgrade — потік модулів</text>
+  <text x="550" y="34" text-anchor="middle" font-size="18" font-weight="700" class="title">Winget Upgrade - потік модулів</text>
 
   <!-- Main pipeline arrows -->
   <line x1="490" y1="126" x2="490" y2="166" class="line-solid" stroke-width="2.5" marker-end="url(#arrowSolid)"/>
@@ -121,8 +121,18 @@
   <g>
     <rect x="800" y="474" width="240" height="64" rx="10" fill="#3574e0" stroke="#1f4fa8" stroke-width="2"/>
     <text x="920" y="496" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">settings_ui.js</text>
-    <text x="920" y="512" text-anchor="middle" font-size="11" fill="#dde9fb">автозапуск · мова</text>
-    <text x="920" y="527" text-anchor="middle" font-size="11" fill="#dde9fb">чекбокси чорного списку</text>
+    <text x="920" y="512" text-anchor="middle" font-size="11" fill="#dde9fb">Загальні · Ігнор-лист</text>
+    <text x="920" y="527" text-anchor="middle" font-size="11" fill="#dde9fb">Розширені (admin overrides)</text>
+  </g>
+
+  <!-- settings_ui.js -> winget_settings.js -->
+  <line x1="920" y1="538" x2="920" y2="652" class="line-dashed" stroke-width="1.75" stroke-dasharray="5,4" marker-end="url(#arrowDashed)"/>
+
+  <!-- winget_settings.js -->
+  <g>
+    <rect x="800" y="652" width="240" height="64" rx="10" fill="#1f9d8f" stroke="#146b62" stroke-width="2"/>
+    <text x="920" y="678" text-anchor="middle" font-size="13.5" font-weight="700" fill="#ffffff">winget_settings.js</text>
+    <text x="920" y="696" text-anchor="middle" font-size="11" fill="#d3f5ef">читає/пише settings.json winget</text>
   </g>
 
   <!-- winget_language.txt + startup shortcut -->

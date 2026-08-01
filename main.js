@@ -15,6 +15,7 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgradePackage } = require('./utils');
 const settings = require('./settings');
+const appSettings = require('./app_settings');
 const consoleUi = require('./console_ui');
 const settingsUi = require('./settings_ui');
 const i18n = require('./i18n');
@@ -193,9 +194,14 @@ async function tryToPerformUpgrade() {
                 consoleUi.showSummary(results, totalElapsedMs);
             }
 
-            consoleUi.appendInfoEvent(i18n.get().finalMessage);
+            const autoCloseSeconds = appSettings.getAutoCloseSeconds();
+            consoleUi.appendInfoEvent(i18n.get().finalMessage(autoCloseSeconds));
 
-            await consoleUi.waitAnyKeyOrTimeout(10000);
+            await consoleUi.waitAnyKeyOrTimeout(
+                autoCloseSeconds == null ? null : autoCloseSeconds * 1000,
+                autoCloseSeconds == null ? null : (remaining) => consoleUi.setCountdownDisplay(i18n.get().autoCloseCountdown(remaining))
+            );
+            consoleUi.setCountdownDisplay('');
 
             if (restartRequested) {
                 consoleUi.appendInfoEvent(i18n.get().restartingSession);

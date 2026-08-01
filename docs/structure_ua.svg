@@ -164,14 +164,19 @@
 
   <!-- Cross-cutting modules -->
   <g>
-    <rect x="180" y="800" width="280" height="56" rx="10" fill="#5b6b82" stroke="#3a4658" stroke-width="2" stroke-dasharray="6,4"/>
-    <text x="320" y="823" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">settings.js</text>
-    <text x="320" y="840" text-anchor="middle" font-size="11" fill="#e7ebf0">шляхи, аргументи winget, версія</text>
+    <rect x="80" y="800" width="300" height="56" rx="10" fill="#5b6b82" stroke="#3a4658" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="230" y="823" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">settings.js</text>
+    <text x="230" y="840" text-anchor="middle" font-size="11" fill="#e7ebf0">шляхи, аргументи winget, версія</text>
   </g>
   <g>
-    <rect x="500" y="800" width="280" height="56" rx="10" fill="#5b6b82" stroke="#3a4658" stroke-width="2" stroke-dasharray="6,4"/>
-    <text x="640" y="823" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">i18n.js</text>
-    <text x="640" y="840" text-anchor="middle" font-size="11" fill="#e7ebf0">рядки EN/UK, перемикання мови</text>
+    <rect x="400" y="800" width="300" height="56" rx="10" fill="#5b6b82" stroke="#3a4658" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="550" y="823" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">i18n.js</text>
+    <text x="550" y="840" text-anchor="middle" font-size="11" fill="#e7ebf0">рядки EN/UK, перемикання мови</text>
+  </g>
+  <g>
+    <rect x="720" y="800" width="300" height="56" rx="10" fill="#5b6b82" stroke="#3a4658" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="870" y="823" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">app_settings.js</text>
+    <text x="870" y="840" text-anchor="middle" font-size="11" fill="#e7ebf0">затримка виходу, winget_autoclose.txt</text>
   </g>
   <text x="550" y="789" text-anchor="middle" font-size="11" class="note-text">↑ використовується напряму в main.js, updater.js, console_ui.js та settings_ui.js</text>
 

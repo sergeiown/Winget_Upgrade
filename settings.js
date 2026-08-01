@@ -7,13 +7,14 @@ const os = require('os');
 const path = require('path');
 
 const settings = {
-    appVersion: '3.1.0',
+    appVersion: '3.2.0',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(process.cwd(), 'winget_upgrade.log'),
     ignoreFilePath: path.join(process.cwd(), 'winget_ignore.txt'),
     legacyIgnoreFilePath: path.join(process.cwd(), 'winget_ignore.json'),
     languageFilePath: path.join(process.cwd(), 'winget_language.txt'),
+    autoCloseFilePath: path.join(process.cwd(), 'winget_autoclose.txt'),
     githubReleasesApiUrl: 'https://api.github.com/repos/sergeiown/Winget_Upgrade/releases/latest',
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,

@@ -117,9 +117,7 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
 
 async function tryToPerformUpgrade() {
     consoleUi.init('Winget Upgrade', `Winget Upgrade ${settings.appVersion}`);
-    consoleUi.onSettingsRequested(() => {
-        consoleUi.appendInfoEvent(i18n.get().settingsUnavailable);
-    });
+    consoleUi.setSettingsAvailable(false);
 
     const currentDate = settings.date;
     await logMessage(`${os.EOL}>> ${currentDate}${os.EOL}`);
@@ -146,6 +144,7 @@ async function tryToPerformUpgrade() {
 
         const wingetLocation = stdout.trim();
         consoleUi.onSettingsRequested(() => openSettingsScreen(wingetLocation));
+        consoleUi.setSettingsAvailable(true);
 
         for (;;) {
             restartRequested = false;

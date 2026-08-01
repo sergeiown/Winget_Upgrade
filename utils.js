@@ -93,6 +93,10 @@ async function loadIgnoreList(ignoreFilePath) {
         .filter((line) => line.length > 0 && !line.startsWith('#'));
 }
 
+function escapeForPowerShellSingleQuotes(value) {
+    return value.replace(/'/g, "''");
+}
+
 function isColumnBoundary(line, position) {
     if (position <= 0) {
         return true;
@@ -294,4 +298,5 @@ module.exports = {
     discoverUpgradablePackages,
     listInstalledPackages,
     upgradePackage,
+    escapeForPowerShellSingleQuotes,
 };

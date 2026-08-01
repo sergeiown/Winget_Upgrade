@@ -36,6 +36,7 @@ let skipHandler = null;
 let settingsHandler = null;
 let upgradeInProgress = false;
 let modalOpen = false;
+let settingsAvailable = false;
 
 let operationLines = [];
 let eventLines = [];
@@ -47,7 +48,13 @@ function applyLocaleToChrome() {
     operationBox.setLabel(t.operationLabel);
     progressBox.setLabel(t.progressLabel);
     eventsLog.setLabel(t.eventsLabel);
-    footerBox.setContent(t.footer);
+    footerBox.setContent(settingsAvailable ? t.footer : t.footerSettingsPending);
+    screen.render();
+}
+
+function setSettingsAvailable(value) {
+    settingsAvailable = value;
+    footerBox.setContent(value ? i18n.get().footer : i18n.get().footerSettingsPending);
     screen.render();
 }
 
@@ -208,8 +215,19 @@ function setSessionState({ index, total, totalInstalled, upToDateCount, toUpdate
     screen.render();
 }
 
+function truncateWithEllipsis(text, maxLength) {
+    if (maxLength <= 1 || text.length <= maxLength) {
+        return text;
+    }
+    return `${text.slice(0, maxLength - 1)}…`;
+}
+
 function setCurrentOperation(pkg) {
-    operationBox.setLabel(` ${blessed.escape(pkg.id)} (${blessed.escape(pkg.source)}) `);
+    const sourceSuffix = ` (${blessed.escape(pkg.source)}) `;
+    const maxIdLength = Math.max(6, screen.width - 4 - sourceSuffix.length);
+    const id = truncateWithEllipsis(blessed.escape(pkg.id), maxIdLength);
+
+    operationBox.setLabel(` ${id}${sourceSuffix}`);
     operationLines = [];
     operationBox.setContent('');
     screen.render();
@@ -231,10 +249,15 @@ function renderProgress() {
 
     const elapsedSeconds = ((Date.now() - progressStartedAt) / 1000).toFixed(1);
     const frame = spinnerFrames[progressFrameIndex];
+    const timeSuffix = ` (${elapsedSeconds}s)`;
 
     progressFrameIndex = (progressFrameIndex + 1) % spinnerFrames.length;
+
+    const maxStatusLength = Math.max(10, screen.width - 4 - timeSuffix.length);
+    const statusText = truncateWithEllipsis(progressStatusText, maxStatusLength);
+
     progressBox.setContent(
-        `{cyan-fg}${frame}{/cyan-fg} ${blessed.escape(progressStatusText)} {white-fg}(${elapsedSeconds}s){/white-fg}`
+        `{cyan-fg}${frame}{/cyan-fg} ${blessed.escape(statusText)} {white-fg}${timeSuffix}{/white-fg}`
     );
     screen.render();
 }
@@ -346,6 +369,7 @@ module.exports = {
     showFatalError,
     onSkipRequested,
     onSettingsRequested,
+    setSettingsAvailable,
     setUpgradeInProgress,
     setModalOpen,
     isModalOpen,

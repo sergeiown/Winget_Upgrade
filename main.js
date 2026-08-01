@@ -194,12 +194,9 @@ async function tryToPerformUpgrade() {
                 consoleUi.showSummary(results, totalElapsedMs);
             }
 
-            const autoCloseSeconds = appSettings.getAutoCloseSeconds();
-            consoleUi.appendInfoEvent(i18n.get().finalMessage(autoCloseSeconds));
-
-            await consoleUi.waitAnyKeyOrTimeout(
-                autoCloseSeconds == null ? null : autoCloseSeconds * 1000,
-                autoCloseSeconds == null ? null : (remaining) => consoleUi.setCountdownDisplay(i18n.get().autoCloseCountdown(remaining))
+            await consoleUi.waitForAutoExit(
+                () => appSettings.getAutoCloseSeconds(),
+                (remaining) => consoleUi.setCountdownDisplay(i18n.get().finalMessage(remaining))
             );
             consoleUi.setCountdownDisplay('');
 

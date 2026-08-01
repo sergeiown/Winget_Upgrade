@@ -388,6 +388,68 @@ function waitAnyKeyOrTimeout(ms, onTick) {
     });
 }
 
+function waitForAutoExit(getSeconds, onTick) {
+    return new Promise((resolve) => {
+        let settled = false;
+        let remainingMs = null;
+        let pausedForModal = false;
+
+        function currentMs() {
+            const seconds = getSeconds();
+            return seconds == null ? null : seconds * 1000;
+        }
+
+        function report() {
+            if (onTick) {
+                onTick(remainingMs == null ? null : Math.max(0, Math.ceil(remainingMs / 1000)));
+            }
+        }
+
+        function finish() {
+            if (settled) {
+                return;
+            }
+            settled = true;
+            clearInterval(timer);
+            screen.removeListener('keypress', handleKeypress);
+            resolve();
+        }
+
+        function handleKeypress(ch, key) {
+            if (modalOpen || (key && key.name === 'f2')) {
+                return;
+            }
+            finish();
+        }
+
+        function tick() {
+            if (modalOpen) {
+                pausedForModal = true;
+                return;
+            }
+            if (pausedForModal) {
+                pausedForModal = false;
+                remainingMs = currentMs();
+                report();
+                return;
+            }
+            if (remainingMs == null) {
+                return;
+            }
+            remainingMs -= 1000;
+            report();
+            if (remainingMs <= 0) {
+                finish();
+            }
+        }
+
+        remainingMs = currentMs();
+        report();
+        const timer = setInterval(tick, 1000);
+        screen.on('keypress', handleKeypress);
+    });
+}
+
 module.exports = {
     init,
     getScreen,
@@ -409,5 +471,6 @@ module.exports = {
     setModalOpen,
     isModalOpen,
     waitAnyKeyOrTimeout,
+    waitForAutoExit,
     exitApp,
 };

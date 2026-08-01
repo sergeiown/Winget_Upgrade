@@ -29,6 +29,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Fixed the auto-exit delay setting (never / 30s / 60s) not actually taking effect if changed while the final countdown was already running: the countdown text and timer both kept using the value that was active when the wait started instead of picking up the new choice after closing settings. The countdown now lives in the "Progress" panel and is re-read live every time settings close.
 - [x] Fixed a real bug where pressing `F2` on the final "press any key to exit" screen could exit the whole program instead of opening settings - a race between the auto-exit wait and the settings hotkey. `F2` is now explicitly excluded from the "any key exits" check.
 - [x] Added a settings-screen option for how long the final summary screen waits before auto-exiting (never / 30 seconds / 60 seconds), with a live countdown shown on screen; opening the settings screen during the countdown now restarts it from the top afterward instead of continuing a stale timer.
 - [x] The ignore list tab now shows already-ignored packages in their own section above the rest, matched the same way the real upgrade run matches them (exact id or partial/substring match) - previously the settings screen only recognized an exact id match, so hand-written partial entries like `chrome` didn't show as checked even though they were actually being honored during upgrades.

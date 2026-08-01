@@ -55,9 +55,8 @@ const STRINGS = {
         fatalError: (message) => `Fatal error: ${message}`,
         finalMessage: (seconds) =>
             seconds
-                ? `Program will automatically exit after ${seconds} seconds, or press any key to exit immediately.`
-                : 'Press any key to exit.',
-        autoCloseCountdown: (seconds) => `{cyan-fg}Closing in ${seconds}s...{/cyan-fg}`,
+                ? `{cyan-fg}Program will automatically exit in ${seconds}s, or press any key to exit immediately.{/cyan-fg}`
+                : '{cyan-fg}Press any key to exit.{/cyan-fg}',
         checkingForUpdates: 'Checking for updates...',
         updateCheckFailed: '{yellow-fg}Update check failed - continuing with the current version.{/yellow-fg}',
         updateCheckNoInfo: '{yellow-fg}Update check returned no usable release information.{/yellow-fg}',
@@ -151,9 +150,8 @@ const STRINGS = {
         fatalError: (message) => `Критична помилка: ${message}`,
         finalMessage: (seconds) =>
             seconds
-                ? `Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.`
-                : 'Натисніть будь-яку клавішу, щоб вийти.',
-        autoCloseCountdown: (seconds) => `{cyan-fg}Закриється через ${seconds}с...{/cyan-fg}`,
+                ? `{cyan-fg}Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.{/cyan-fg}`
+                : '{cyan-fg}Натисніть будь-яку клавішу, щоб вийти.{/cyan-fg}',
         checkingForUpdates: 'Перевірка оновлень...',
         updateCheckFailed: '{yellow-fg}Перевірка оновлень не вдалась - продовжуємо з поточною версією.{/yellow-fg}',
         updateCheckNoInfo: '{yellow-fg}Перевірка оновлень не повернула придатної інформації.{/yellow-fg}',

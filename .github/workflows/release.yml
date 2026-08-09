@@ -33,7 +33,10 @@ jobs:
         run: npm install
 
       - name: Build executable
-        run: bun build --compile --windows-icon=sagittarius_1x1.ico --outfile winget_upgrade.exe main.js
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          bun build --compile --windows-icon=sagittarius_1x1.ico --windows-title="Winget Upgrade" --windows-publisher="Serhii I. Myshko" --windows-version="$version.0" --windows-description="Winget Upgrade" --windows-copyright="Copyright (c) 2024-2026 Serhii I. Myshko" --outfile winget_upgrade.exe main.js
 
       - name: Decode code-signing certificate
         shell: pwsh

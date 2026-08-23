@@ -97,3 +97,6 @@ chrome
 ## Ліцензія
 
 [Copyright (c) 2024-2026 Serhii I. Myshko](https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE)
+
+##
+> **Примітка. Якщо ви в Україні - перевірте, чи стежите ви за тривогами у вашому регіоні. [Alert Server](https://github.com/sergeiown/Alert_Server) - мій застосунок для Windows з відкритим кодом, без жодної реклами чи прихованих умов, що показує сповіщення про повітряну тривогу, live-мапу загроз і лінію фронту для обраних вами регіонів. Будьте в безпеці.**

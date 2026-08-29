@@ -37,11 +37,17 @@ The program runs as a full-screen console UI (not a scrolling log) with dedicate
 
 The interface text is in Ukrainian when Windows' system language is Ukrainian, and in English otherwise; this can be changed at any time from the settings screen (see below).
 
+<img src="docs/screenshot_main_en.png" width="720" alt="Main screen">
+
 ### 4. Settings screen
 Press `F2` once winget has been detected (the key is disabled and shown dimmed until then) to open the settings screen. It has three tabs, switched with `←`/`→`; within a tab, `↑`/`↓` moves between options and `Enter`/`Space` changes the highlighted one:
 - **General** - autostart (creates or removes a shortcut in the Windows Startup folder), the language switch (Ukrainian/English, takes effect immediately), how long the program waits on the final summary screen before auto-exiting (never / 30 seconds / 60 seconds - the countdown is shown live and restarts from the top if you open the settings screen while it's counting down), and a curated subset of winget's own configuration: install scope (current user or entire machine), whether install notes are shown, whether winget's interactive prompts are allowed, and the maximum resume-attempt count. These are written directly to winget's own `settings.json`.
 - **Ignore list** - a scrollable, checkable list of every installed package with a live incremental search (just start typing to filter) and a "selected of total" counter. Already-ignored packages (matched the same way as the real upgrade run - exact id or partial match) are shown in their own section above the rest. Checking a package adds its exact identifier to `winget_ignore.txt`, unchecking removes it; entries you've added by hand (partial matches like `chrome`) are left untouched.
 - **Advanced** - two administrator-gated winget overrides: skipping the malware scan for local archive installers, and continuing an install when the installer hash doesn't match. Turning either on triggers a real Windows elevation (UAC) prompt; the on-screen state is always re-read from winget afterward rather than assumed.
+
+<img src="docs/screenshot_settings_general_en.png" width="720" alt="General tab"><br>
+<img src="docs/screenshot_settings_ignore_en.png" width="720" alt="Ignore list tab"><br>
+<img src="docs/screenshot_settings_advanced_en.png" width="720" alt="Advanced tab">
 
 ### 5. Logging.
 The program keeps a log of events in the file `winget_upgrade.log`, which stores information about:

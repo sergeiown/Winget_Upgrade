@@ -25,7 +25,7 @@ const execAsync = promisify(exec);
 
 async function getWingetVersion() {
     try {
-        const { stdout } = await execAsync(settings.wingetVersion);
+        const { stdout } = await execAsync(settings.wingetVersion, { timeout: settings.wingetCommandTimeoutMs });
         const version = stdout.trim().replace(/^v/, '');
         const [major, minor] = version.split('.').map(Number);
 
@@ -125,11 +125,12 @@ async function tryToPerformUpgrade() {
     await logMessage(`${os.EOL}>> ${currentDate}${os.EOL}`);
 
     await checkForUpdate();
+    await delay(settings.wingetSettlePauseMs);
 
     try {
         let stdout;
         try {
-            stdout = (await execAsync(settings.wingetPath)).stdout;
+            stdout = (await execAsync(settings.wingetPath, { timeout: settings.wingetCommandTimeoutMs })).stdout;
         } catch (whereError) {
             throw new Error(`Winget is not installed.`);
         }

@@ -19,6 +19,9 @@ const settings = {
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,
     preUpgradePauseMs: 5000,
+    wingetSettlePauseMs: 1000,
+    wingetCommandTimeoutMs: 120000,
+    packageUpgradeTimeoutMs: 30 * 60 * 1000,
     wingetArgs: {
         list: ['list', '--accept-source-agreements', '--disable-interactivity', '--ignore-warnings'],
         upgradeList: ['upgrade', '--accept-source-agreements', '--disable-interactivity', '--ignore-warnings'],

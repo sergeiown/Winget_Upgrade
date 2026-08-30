@@ -14,6 +14,7 @@ const execAsync = promisify(exec);
 
 function execAcceptingPrompts(command, options) {
     const result = execAsync(command, options);
+    result.child.stdin.on('error', () => {});
     result.child.stdin.write(`y${os.EOL}y${os.EOL}`);
     result.child.stdin.end();
     return result;
@@ -154,7 +155,10 @@ function parseUpgradeTable(output) {
 
 async function listInstalledPackages(wingetLocation) {
     const listCommand = `"${wingetLocation}" ${settings.wingetArgs.list.join(' ')}`;
-    const { stdout } = await execAcceptingPrompts(listCommand, { maxBuffer: 10 * 1024 * 1024 });
+    const { stdout } = await execAcceptingPrompts(listCommand, {
+        maxBuffer: 10 * 1024 * 1024,
+        timeout: settings.wingetCommandTimeoutMs,
+    });
 
     return parseUpgradeTable(stdout);
 }
@@ -163,7 +167,7 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
     const listCommand = `"${wingetLocation}" ${settings.wingetArgs.list.join(' ')}`;
     const upgradeCommand = `"${wingetLocation}" ${settings.wingetArgs.upgradeList.join(' ')}`;
 
-    const execOptions = { maxBuffer: 10 * 1024 * 1024 };
+    const execOptions = { maxBuffer: 10 * 1024 * 1024, timeout: settings.wingetCommandTimeoutMs };
 
     const listResult = await execAcceptingPrompts(listCommand, execOptions);
     const upgradeResult = await execAcceptingPrompts(upgradeCommand, execOptions);
@@ -230,9 +234,10 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     const command = `"${wingetLocation}" ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
     const startedAt = Date.now();
     const logStream = createWriteStream(logFilePath, { flags: 'a' });
-    const childProcess = exec(command);
+    const childProcess = exec(command, { timeout: settings.packageUpgradeTimeoutMs });
     let skipped = false;
 
+    childProcess.stdin.on('error', () => {});
     childProcess.stdin.write(`y${os.EOL}y${os.EOL}`);
     childProcess.stdin.end();
 

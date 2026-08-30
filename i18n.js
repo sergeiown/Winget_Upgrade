@@ -58,6 +58,7 @@ const STRINGS = {
                 ? `{cyan-fg}Program will automatically exit in ${seconds}s, or press any key to exit immediately.{/cyan-fg}`
                 : '{cyan-fg}Press any key to exit.{/cyan-fg}',
         checkingForUpdates: 'Checking for updates...',
+        checkingPackages: 'Checking installed packages...',
         updateCheckFailed: '{yellow-fg}Update check failed - continuing with the current version.{/yellow-fg}',
         updateCheckNoInfo: '{yellow-fg}Update check returned no usable release information.{/yellow-fg}',
         upToDateVersion: (version) => `{green-fg}You're on the latest version (${version}).{/green-fg}`,
@@ -153,6 +154,7 @@ const STRINGS = {
                 ? `{cyan-fg}Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.{/cyan-fg}`
                 : '{cyan-fg}Натисніть будь-яку клавішу, щоб вийти.{/cyan-fg}',
         checkingForUpdates: 'Перевірка оновлень...',
+        checkingPackages: 'Перевірка встановлених пакетів...',
         updateCheckFailed: '{yellow-fg}Перевірка оновлень не вдалась - продовжуємо з поточною версією.{/yellow-fg}',
         updateCheckNoInfo: '{yellow-fg}Перевірка оновлень не повернула придатної інформації.{/yellow-fg}',
         upToDateVersion: (version) => `{green-fg}У вас остання версія (${version}).{/green-fg}`,

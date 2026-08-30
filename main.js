@@ -149,10 +149,14 @@ async function tryToPerformUpgrade() {
         for (;;) {
             restartRequested = false;
 
-            const { packages, totalInstalled, upToDateCount, ignoredCount } = await discoverUpgradablePackages(
-                wingetLocation,
-                settings.ignoreFilePath
-            );
+            consoleUi.startProgress(i18n.get().checkingPackages);
+            let discovery;
+            try {
+                discovery = await discoverUpgradablePackages(wingetLocation, settings.ignoreFilePath);
+            } finally {
+                consoleUi.stopProgress();
+            }
+            const { packages, totalInstalled, upToDateCount, ignoredCount } = discovery;
 
             await logMessage(
                 `Checked ${totalInstalled} installed package(s): ${upToDateCount} up to date, ${packages.length} to update, ${ignoredCount} ignored.${os.EOL}`

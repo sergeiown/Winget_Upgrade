@@ -20,7 +20,7 @@ const settings = {
     maxLogFileSize: 256 * 1024,
     preUpgradePauseMs: 5000,
     wingetSettlePauseMs: 1000,
-    wingetCommandTimeoutMs: 20000,
+    wingetCommandTimeoutMs: 60000,
     packageUpgradeTimeoutMs: 30 * 60 * 1000,
     wingetArgs: {
         list: ['list', '--accept-source-agreements', '--disable-interactivity', '--ignore-warnings'],

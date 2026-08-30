@@ -165,38 +165,16 @@ async function killStaleWingetProcesses() {
     }
 }
 
-async function resetWingetSources(wingetLocation) {
-    await killStaleWingetProcesses();
-    await execAsync(`"${wingetLocation}" source reset --force`, { timeout: settings.wingetCommandTimeoutMs });
-}
-
-async function removeMsstoreSource(wingetLocation) {
-    await execAsync(`"${wingetLocation}" source remove msstore`, { timeout: settings.wingetCommandTimeoutMs });
-}
-
-const RECOVERY_STEPS = [
-    { label: 'killing stale winget processes and resetting sources', run: resetWingetSources },
-    { label: 'removing the "msstore" source', run: removeMsstoreSource },
-];
-
 async function execWithWingetRecovery(wingetLocation, command, options) {
     try {
         return await execAcceptingPrompts(command, options);
     } catch (firstError) {
-        for (const step of RECOVERY_STEPS) {
-            try {
-                await logMessage(`Warning: A winget command failed, attempting recovery by ${step.label}.${os.EOL}`);
-                await step.run(wingetLocation);
-            } catch (recoveryError) {
-                await logMessage(`Warning: Recovery step failed: ${recoveryError.message}${os.EOL}`);
-                continue;
-            }
-
-            try {
-                return await execAcceptingPrompts(command, options);
-            } catch (retryError) {
-                continue;
-            }
+        try {
+            await logMessage(`Warning: A winget command failed, attempting recovery by killing stale winget processes.${os.EOL}`);
+            await killStaleWingetProcesses();
+            return await execAcceptingPrompts(command, options);
+        } catch (retryError) {
+            // Fall through to the original error below.
         }
         throw firstError;
     }

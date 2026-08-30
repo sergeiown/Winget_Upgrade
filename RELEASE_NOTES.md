@@ -29,9 +29,9 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] Fixed winget commands hanging indefinitely (freezing the whole app) right after an auto-update relaunch, and added a safety timeout to every winget invocation so this can no longer hang forever.
+- [x] Fixed winget commands sometimes hanging forever after an auto-update relaunch.
 - [x] Added an old-school pseudographic splash screen on startup: a block-letter "WINGET UPGRADE" banner with the license's copyright line, drawn with a smooth half-block reveal animation and a hidden cursor.
-- [x] Fixed panel content bleeding past its border on high DPI-scaled displays. "Session" and "Progress" now never scroll or wrap, and long lines in "Current operation" and "Additionally" are truncated to the terminal's actual width instead of overflowing.
+- [x] Fixed panel content overflowing its border on high-DPI displays.
 - [x] Added a small gear badge to the app icon (bottom-right corner) to visually hint at the settings screen, on the taskbar/title bar icon and in both readmes.
 - [x] Fixed the compiled executable showing "Bun" / "Oven" as its file description and company in Windows (Properties dialog, Task Manager's Startup tab, etc.) instead of the actual app name and author - Bun's compiler leaves its own default metadata in place unless explicitly overridden. The build now sets the product name, publisher, version, description, and copyright explicitly.
 - [x] Fixed the auto-exit delay setting (never / 30s / 60s) not actually taking effect if changed while the final countdown was already running: the countdown text and timer both kept using the value that was active when the wait started instead of picking up the new choice after closing settings. The countdown now lives in the "Progress" panel and is re-read live every time settings close.

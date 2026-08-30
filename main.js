@@ -124,7 +124,6 @@ async function tryToPerformUpgrade() {
     await logMessage(`${os.EOL}>> ${currentDate}${os.EOL}`);
 
     await checkForUpdate();
-    await delay(settings.stepPauseMs);
 
     try {
         let stdout;
@@ -140,8 +139,6 @@ async function tryToPerformUpgrade() {
         } else {
             throw new Error(`Winget is not installed.`);
         }
-
-        await delay(settings.stepPauseMs);
 
         const wingetLocation = stdout.trim();
         consoleUi.onSettingsRequested(() => openSettingsScreen(wingetLocation));

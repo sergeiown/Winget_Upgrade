@@ -82,6 +82,7 @@ function init(windowTitle, boxLabel) {
         Object.assign({}, boxDefaults, {
             top: 0,
             height: 4,
+            wrap: false,
             label: ` ${boxLabel || windowTitle || 'Winget Upgrade'} `,
             content: 'Initializing...',
         })
@@ -102,6 +103,7 @@ function init(windowTitle, boxLabel) {
         Object.assign({}, boxDefaults, {
             top: 14,
             height: 3,
+            wrap: false,
             label: t.progressLabel,
         })
     );
@@ -140,6 +142,11 @@ function init(windowTitle, boxLabel) {
     });
 
     i18n.onLocaleChange(applyLocaleToChrome);
+
+    screen.on('resize', () => {
+        screen.alloc();
+        screen.render();
+    });
 
     screen.key(['f5'], () => {
         if (!modalOpen && skipHandler) {
@@ -222,6 +229,14 @@ function truncateWithEllipsis(text, maxLength) {
     return `${text.slice(0, maxLength - 1)}…`;
 }
 
+function truncateTaggedLine(text, maxLength) {
+    const plain = text.replace(/\{[^}]*\}/g, '');
+    if (maxLength <= 1 || plain.length <= maxLength) {
+        return text;
+    }
+    return `${plain.slice(0, maxLength - 1)}…`;
+}
+
 function setCurrentOperation(pkg) {
     const sourceSuffix = ` (${blessed.escape(pkg.source)}) `;
     const maxIdLength = Math.max(6, screen.width - 4 - sourceSuffix.length);
@@ -235,8 +250,9 @@ function setCurrentOperation(pkg) {
 
 function appendOperationLine(line) {
     const visibleRows = Math.max(1, OPERATION_BOX_HEIGHT - 2);
+    const maxLineLength = Math.max(10, screen.width - 4);
 
-    operationLines.push(blessed.escape(line));
+    operationLines.push(blessed.escape(truncateWithEllipsis(line, maxLineLength)));
     operationLines = operationLines.slice(-visibleRows);
     operationBox.setContent(operationLines.join('\n'));
     screen.render();
@@ -291,8 +307,9 @@ function setCountdownDisplay(text) {
 function appendEventLine(text) {
     const resolvedHeight = typeof eventsLog.height === 'number' ? eventsLog.height : 20;
     const visibleRows = Math.max(1, resolvedHeight - 2);
+    const maxLineLength = Math.max(10, screen.width - 4);
 
-    eventLines.push(text);
+    eventLines.push(truncateTaggedLine(text, maxLineLength));
     eventLines = eventLines.slice(-visibleRows);
     eventsLog.setContent(eventLines.join('\n'));
     screen.render();

@@ -153,9 +153,39 @@ function parseUpgradeTable(output) {
     return packages;
 }
 
+let sourcesRecoveryAttempted = false;
+
+async function tryRecoverWingetSources(wingetLocation) {
+    if (sourcesRecoveryAttempted) {
+        return false;
+    }
+    sourcesRecoveryAttempted = true;
+
+    try {
+        await logMessage(`Warning: A winget command failed, attempting "source reset --force" recovery.${os.EOL}`);
+        await execAsync(`"${wingetLocation}" source reset --force`, { timeout: settings.wingetCommandTimeoutMs });
+        return true;
+    } catch (error) {
+        await logMessage(`Warning: Winget source recovery did not succeed: ${error.message}${os.EOL}`);
+        return false;
+    }
+}
+
+async function execWithWingetRecovery(wingetLocation, command, options) {
+    try {
+        return await execAcceptingPrompts(command, options);
+    } catch (error) {
+        const recovered = await tryRecoverWingetSources(wingetLocation);
+        if (!recovered) {
+            throw error;
+        }
+        return await execAcceptingPrompts(command, options);
+    }
+}
+
 async function listInstalledPackages(wingetLocation) {
     const listCommand = `"${wingetLocation}" ${settings.wingetArgs.list.join(' ')}`;
-    const { stdout } = await execAcceptingPrompts(listCommand, {
+    const { stdout } = await execWithWingetRecovery(wingetLocation, listCommand, {
         maxBuffer: 10 * 1024 * 1024,
         timeout: settings.wingetCommandTimeoutMs,
     });
@@ -169,8 +199,8 @@ async function discoverUpgradablePackages(wingetLocation, ignoreFilePath) {
 
     const execOptions = { maxBuffer: 10 * 1024 * 1024, timeout: settings.wingetCommandTimeoutMs };
 
-    const listResult = await execAcceptingPrompts(listCommand, execOptions);
-    const upgradeResult = await execAcceptingPrompts(upgradeCommand, execOptions);
+    const listResult = await execWithWingetRecovery(wingetLocation, listCommand, execOptions);
+    const upgradeResult = await execWithWingetRecovery(wingetLocation, upgradeCommand, execOptions);
 
     const totalInstalled = parseUpgradeTable(listResult.stdout).length;
     const upgradable = parseUpgradeTable(upgradeResult.stdout);

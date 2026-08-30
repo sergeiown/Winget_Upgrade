@@ -153,33 +153,52 @@ function parseUpgradeTable(output) {
     return packages;
 }
 
-let sourcesRecoveryAttempted = false;
+async function killStaleWingetProcesses() {
+    const killCommands = ['taskkill /IM winget.exe /F /T', 'taskkill /IM WindowsPackageManagerServer.exe /F /T'];
 
-async function tryRecoverWingetSources(wingetLocation) {
-    if (sourcesRecoveryAttempted) {
-        return false;
-    }
-    sourcesRecoveryAttempted = true;
-
-    try {
-        await logMessage(`Warning: A winget command failed, attempting "source reset --force" recovery.${os.EOL}`);
-        await execAsync(`"${wingetLocation}" source reset --force`, { timeout: settings.wingetCommandTimeoutMs });
-        return true;
-    } catch (error) {
-        await logMessage(`Warning: Winget source recovery did not succeed: ${error.message}${os.EOL}`);
-        return false;
+    for (const killCommand of killCommands) {
+        try {
+            await execAsync(killCommand, { timeout: 5000 });
+        } catch (error) {
+            // Nothing to kill, or already gone - not an error worth reporting.
+        }
     }
 }
+
+async function resetWingetSources(wingetLocation) {
+    await killStaleWingetProcesses();
+    await execAsync(`"${wingetLocation}" source reset --force`, { timeout: settings.wingetCommandTimeoutMs });
+}
+
+async function removeMsstoreSource(wingetLocation) {
+    await execAsync(`"${wingetLocation}" source remove msstore`, { timeout: settings.wingetCommandTimeoutMs });
+}
+
+const RECOVERY_STEPS = [
+    { label: 'killing stale winget processes and resetting sources', run: resetWingetSources },
+    { label: 'removing the "msstore" source', run: removeMsstoreSource },
+];
 
 async function execWithWingetRecovery(wingetLocation, command, options) {
     try {
         return await execAcceptingPrompts(command, options);
-    } catch (error) {
-        const recovered = await tryRecoverWingetSources(wingetLocation);
-        if (!recovered) {
-            throw error;
+    } catch (firstError) {
+        for (const step of RECOVERY_STEPS) {
+            try {
+                await logMessage(`Warning: A winget command failed, attempting recovery by ${step.label}.${os.EOL}`);
+                await step.run(wingetLocation);
+            } catch (recoveryError) {
+                await logMessage(`Warning: Recovery step failed: ${recoveryError.message}${os.EOL}`);
+                continue;
+            }
+
+            try {
+                return await execAcceptingPrompts(command, options);
+            } catch (retryError) {
+                continue;
+            }
         }
-        return await execAcceptingPrompts(command, options);
+        throw firstError;
     }
 }
 

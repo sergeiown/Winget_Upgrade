@@ -29,7 +29,8 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] Fixed auto-updating sometimes failing or leaving the app hanging on restart.
+- [x] Winget commands that get stuck now attempt an automatic recovery (source reset) before giving up, and time out much sooner instead of freezing the app.
+- [x] Fixed auto-updating sometimes failing or leaving the app hanging on restart. **Note:** if you're on 3.3.0 or 3.3.1, auto-update can't reach this fix by itself - please download and run the installer manually once from the [releases page](https://github.com/sergeiown/Winget_Upgrade/releases/latest).
 - [x] Added an old-school pseudographic splash screen on startup: a block-letter "WINGET UPGRADE" banner with the license's copyright line, drawn with a smooth half-block reveal animation and a hidden cursor.
 - [x] Fixed panel content overflowing its border on high-DPI displays.
 - [x] Added a small gear badge to the app icon (bottom-right corner) to visually hint at the settings screen, on the taskbar/title bar icon and in both readmes.

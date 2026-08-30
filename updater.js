@@ -85,7 +85,7 @@ async function installAndExit(installerPath) {
 
     await fsp.writeFile(helperPath, helperScript);
 
-    const child = spawn(helperPath, [], { detached: true, stdio: 'ignore' });
+    const child = spawn(process.env.ComSpec || 'cmd.exe', ['/c', helperPath], { detached: true, stdio: 'ignore' });
     child.unref();
     process.exit(0);
 }

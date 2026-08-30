@@ -58,14 +58,172 @@ function setSettingsAvailable(value) {
     screen.render();
 }
 
-function init(windowTitle, boxLabel) {
-    screen = blessed.screen({
-        smartCSR: true,
-        mouse: true,
-        fullUnicode: true,
-        dockBorders: true,
-        title: windowTitle || 'Winget Upgrade',
+const BLOCK_FONT = {
+    A: [' ██ ', '█  █', '████', '█  █', '█  █'],
+    D: ['███ ', '█  █', '█  █', '█  █', '███ '],
+    E: ['████', '█   ', '███ ', '█   ', '████'],
+    G: [' ███', '█   ', '█ ██', '█  █', ' ███'],
+    I: ['███', ' █ ', ' █ ', ' █ ', '███'],
+    N: ['█  █', '██ █', '█ ██', '█  █', '█  █'],
+    P: ['███ ', '█  █', '███ ', '█   ', '█   '],
+    R: ['███ ', '█  █', '███ ', '█ █ ', '█  █'],
+    T: ['███', ' █ ', ' █ ', ' █ ', ' █ '],
+    U: ['█  █', '█  █', '█  █', '█  █', ' ██ '],
+    W: ['█   █', '█   █', '█ █ █', '██ ██', '█   █'],
+};
+
+function renderBlockWord(word) {
+    const rows = ['', '', '', '', ''];
+    [...word].forEach((letter, index) => {
+        const glyph = BLOCK_FONT[letter];
+        for (let row = 0; row < 5; row++) {
+            rows[row] += glyph[row] + (index < word.length - 1 ? ' ' : '');
+        }
     });
+    return rows;
+}
+
+function centeredLine(text, width) {
+    const pad = Math.max(0, width - text.length);
+    const left = Math.floor(pad / 2);
+    return `${' '.repeat(left)}${text}`;
+}
+
+function buildBannerLines() {
+    const wingetRows = renderBlockWord('WINGET');
+    const upgradeRows = renderBlockWord('UPGRADE');
+    const authorText = 'Copyright (c) 2024-2026 Serhii I. Myshko';
+    const width = Math.max(...wingetRows.concat(upgradeRows).map((row) => row.length), authorText.length);
+
+    const centeredWinget = wingetRows.map((row) => centeredLine(row, width));
+    const centeredUpgrade = upgradeRows.map((row) => centeredLine(row, width));
+    const author = centeredLine(authorText, width);
+
+    return [...centeredWinget, '', ...centeredUpgrade, '', author];
+}
+
+function buildBannerBitmap(lines, width) {
+    return lines.map((line) => {
+        const padded = line.padEnd(width, ' ');
+        return padded.split('').map((ch) => (ch !== ' ' ? 1 : 0));
+    });
+}
+
+function combineHalfBlock(top, bottom) {
+    if (top && bottom) {
+        return '█';
+    }
+    if (top) {
+        return '▀';
+    }
+    if (bottom) {
+        return '▄';
+    }
+    return ' ';
+}
+
+function renderBitmapRevealFromTop(bitmap, width, windowHeight, totalShiftSteps, boundary) {
+    const height = bitmap.length;
+    const revealed = totalShiftSteps - boundary;
+
+    function valueAt(row, col) {
+        if (row < 0 || row >= height) {
+            return 0;
+        }
+        return bitmap[row][col];
+    }
+
+    const outLines = [];
+    for (let j = 0; j < windowHeight; j++) {
+        let line = '';
+        for (let x = 0; x < width; x++) {
+            const upper = 2 * j < revealed ? valueAt(j, x) : 0;
+            const lower = 2 * j + 1 < revealed ? valueAt(j, x) : 0;
+            line += combineHalfBlock(upper, lower);
+        }
+        outLines.push(line);
+    }
+    return outLines;
+}
+
+function showSplash() {
+    return new Promise((resolve) => {
+        screen = blessed.screen({
+            smartCSR: true,
+            mouse: true,
+            fullUnicode: true,
+            dockBorders: true,
+            title: 'Winget Upgrade',
+        });
+        screen.program.hideCursor();
+
+        const lines = buildBannerLines();
+        const boxHeight = lines.length;
+        const boxWidth = Math.max(...lines.map((line) => line.length));
+        const bitmap = buildBannerBitmap(lines, boxWidth);
+
+        const totalRows = screen.rows || 40;
+        const finalTop = Math.max(0, Math.floor((totalRows - boxHeight) / 2));
+
+        const splashBox = blessed.box({
+            parent: screen,
+            top: finalTop,
+            left: 'center',
+            width: boxWidth,
+            height: boxHeight,
+            style: { fg: 'cyan' },
+            content: '',
+        });
+
+        const totalShiftSteps = boxHeight * 2;
+        const durationMs = 2000;
+        const stepMs = durationMs / totalShiftSteps;
+        let boundary = totalShiftSteps;
+
+        function renderFrame() {
+            if (boundary <= 0) {
+                splashBox.setContent(lines.join('\n'));
+            } else {
+                const frameLines = renderBitmapRevealFromTop(bitmap, boxWidth, boxHeight, totalShiftSteps, boundary);
+                splashBox.setContent(frameLines.join('\n'));
+            }
+            screen.program.hideCursor();
+            screen.render();
+        }
+
+        function tick() {
+            boundary -= 1;
+            renderFrame();
+            if (boundary > 0) {
+                setTimeout(tick, stepMs);
+            } else {
+                setTimeout(() => {
+                    splashBox.destroy();
+                    screen.program.hideCursor();
+                    screen.render();
+                    resolve();
+                }, 2000);
+            }
+        }
+
+        renderFrame();
+        setTimeout(tick, stepMs);
+    });
+}
+
+function init(windowTitle, boxLabel) {
+    if (!screen) {
+        screen = blessed.screen({
+            smartCSR: true,
+            mouse: true,
+            fullUnicode: true,
+            dockBorders: true,
+            title: windowTitle || 'Winget Upgrade',
+        });
+        screen.program.hideCursor();
+    } else {
+        screen.title = windowTitle || 'Winget Upgrade';
+    }
 
     const t = i18n.get();
 
@@ -468,6 +626,7 @@ function waitForAutoExit(getSeconds, onTick) {
 }
 
 module.exports = {
+    showSplash,
     init,
     getScreen,
     setSessionState,

@@ -117,6 +117,7 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
 }
 
 async function tryToPerformUpgrade() {
+    await consoleUi.showSplash();
     consoleUi.init('Winget Upgrade', `Winget Upgrade ${settings.appVersion}`);
     consoleUi.setSettingsAvailable(false);
 

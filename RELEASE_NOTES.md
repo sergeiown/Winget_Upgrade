@@ -29,7 +29,7 @@
 | :--- | :---: |
 
 ### Recent Changes
-- [x] Fixed winget commands sometimes hanging or failing to auto-update. Stuck commands now time out much sooner and trigger an automatic recovery (clearing stale processes, resetting sources, and removing a broken `msstore` source as a last resort). **Note:** if you're on 3.3.0 or 3.3.1, please reinstall manually once from the [releases page](https://github.com/sergeiown/Winget_Upgrade/releases/latest) - auto-update can't reach this fix by itself.
+- [x] Fixed winget commands sometimes hanging or failing to auto-update. Slow commands now show a progress indicator instead of looking frozen, get more time before timing out, and trigger an automatic recovery if they do fail. **Note:** if you're on 3.3.0 or 3.3.1, please reinstall manually once from the [releases page](https://github.com/sergeiown/Winget_Upgrade/releases/latest) - auto-update can't reach this fix by itself.
 - [x] Added an old-school pseudographic splash screen on startup.
 - [x] Fixed panel content overflowing its border on high-DPI displays.
 - [x] Added a small gear badge to the app icon to visually hint at the settings screen.

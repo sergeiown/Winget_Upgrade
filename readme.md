@@ -33,7 +33,9 @@ The Winget Upgrade program uses `winget upgrade` to discover which installed pac
 - Distinguishes an actual upgrade from "already up to date" and from a genuine failure, so the final summary is accurate.
 
 ### 3. Visual output
-The program runs as a full-screen console UI (not a scrolling log) with dedicated panels: session state (how many packages are installed in total, up to date, to update, and ignored - even when there's nothing to do), the current operation, live progress for whichever package is being upgraded, and a scrolling log of recent events. A footer shows the available keys: `F2` opens the settings screen, `F5` skips the package currently upgrading, and `Esc` exits (asking for confirmation if an upgrade is still running).
+On launch, an old-school pseudographic splash screen briefly draws a block-letter "WINGET UPGRADE" banner before the program starts.
+
+The program then runs as a full-screen console UI (not a scrolling log) with dedicated panels: session state (how many packages are installed in total, up to date, to update, and ignored - even when there's nothing to do), the current operation, live progress for whichever package is being upgraded, and a scrolling log of recent events. A footer shows the available keys: `F2` opens the settings screen, `F5` skips the package currently upgrading, and `Esc` exits (asking for confirmation if an upgrade is still running).
 
 The interface text is in Ukrainian when Windows' system language is Ukrainian, and in English otherwise; this can be changed at any time from the settings screen (see below).
 

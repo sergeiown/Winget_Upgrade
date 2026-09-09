@@ -25,9 +25,7 @@ function delay(ms) {
 }
 
 async function logMessage(message) {
-    await fs
-        .appendFile(settings.logFilePath, message)
-        .catch((err) => console.error(`Error writing to log file: ${err.message}`));
+    await fs.appendFile(settings.logFilePath, message).catch(() => {});
 }
 
 function isLoggableLine(line) {
@@ -319,7 +317,7 @@ async function checkAndTrimLogFile(logFilePath, maxFileSizeInBytes) {
             }
         }
     } catch (error) {
-        console.error(`Failed to trim log file: ${error}`);
+        // Trimming is best-effort - never write raw console output while the full-screen UI owns the terminal.
     }
 }
 

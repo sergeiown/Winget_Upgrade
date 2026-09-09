@@ -6,7 +6,7 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 process.removeAllListeners('warning');
 process.on('warning', (warning) => {
     if (warning.name !== 'ExperimentalWarning') {
-        console.warn(warning);
+        logMessage(`Warning: ${warning.stack || warning}${os.EOL}`);
     }
 });
 
@@ -226,11 +226,7 @@ async function tryToPerformUpgrade() {
 }
 
 tryToPerformUpgrade().catch(async (error) => {
-    try {
-        await logMessage(`Fatal error: ${error && error.stack ? error.stack : error}${os.EOL}`);
-    } catch (loggingError) {
-        console.error(`Failed to log fatal error: ${loggingError}`);
-    }
+    await logMessage(`Fatal error: ${error && error.stack ? error.stack : error}${os.EOL}`);
 
     if (consoleUi.getScreen()) {
         consoleUi.showFatalError(i18n.get().fatalError(error && error.message ? error.message : error));

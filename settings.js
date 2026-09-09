@@ -6,15 +6,18 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 const os = require('os');
 const path = require('path');
 
+const isBunRuntime = path.basename(process.execPath).toLowerCase() === 'bun.exe';
+const appDir = isBunRuntime ? process.cwd() : path.dirname(process.execPath);
+
 const settings = {
     appVersion: '3.3.7',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
-    logFilePath: path.join(process.cwd(), 'winget_upgrade.log'),
-    ignoreFilePath: path.join(process.cwd(), 'winget_ignore.txt'),
-    legacyIgnoreFilePath: path.join(process.cwd(), 'winget_ignore.json'),
-    languageFilePath: path.join(process.cwd(), 'winget_language.txt'),
-    autoCloseFilePath: path.join(process.cwd(), 'winget_autoclose.txt'),
+    logFilePath: path.join(appDir, 'winget_upgrade.log'),
+    ignoreFilePath: path.join(appDir, 'winget_ignore.txt'),
+    legacyIgnoreFilePath: path.join(appDir, 'winget_ignore.json'),
+    languageFilePath: path.join(appDir, 'winget_language.txt'),
+    autoCloseFilePath: path.join(appDir, 'winget_autoclose.txt'),
     githubReleasesApiUrl: 'https://api.github.com/repos/sergeiown/Winget_Upgrade/releases/latest',
     updateAssetName: 'WingetUpgradeSetup.exe',
     maxLogFileSize: 256 * 1024,

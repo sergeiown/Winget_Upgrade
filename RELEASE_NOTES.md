@@ -6,6 +6,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Fixed the final summary always showing "0" up-to-date packages regardless of the real count.
 - [x] Fixed the log and ignore-list files sometimes being written to the wrong (and inaccessible) system folder when launched at sign-in, and stray error text corrupting the console UI.
 - [x] Fixed winget commands sometimes hanging or failing to auto-update. Slow commands now show a progress indicator instead of looking frozen, get more time before timing out, and trigger an automatic recovery if they do fail. **Note:** if you're on 3.3.0 or 3.3.1, please reinstall manually once from the [releases page](https://github.com/sergeiown/Winget_Upgrade/releases/latest) - auto-update can't reach this fix by itself.
 - [x] Added an old-school pseudographic splash screen on startup.

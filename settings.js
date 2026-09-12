@@ -10,7 +10,7 @@ const isBunRuntime = path.basename(process.execPath).toLowerCase() === 'bun.exe'
 const appDir = isBunRuntime ? process.cwd() : path.dirname(process.execPath);
 
 const settings = {
-    appVersion: '3.3.8',
+    appVersion: '3.3.9',
     wingetPath: 'where.exe winget',
     wingetVersion: 'winget --version',
     logFilePath: path.join(appDir, 'winget_upgrade.log'),

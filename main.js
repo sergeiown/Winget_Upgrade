@@ -194,7 +194,7 @@ async function tryToPerformUpgrade() {
             await logMessage(settings.finalLogMessage);
 
             if (results.length > 0) {
-                consoleUi.showSummary(results, totalElapsedMs);
+                consoleUi.showSummary(results, totalElapsedMs, upToDateCount);
             }
 
             await consoleUi.waitForAutoExit(

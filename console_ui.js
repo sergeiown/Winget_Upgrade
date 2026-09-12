@@ -486,9 +486,9 @@ function appendInfoEvent(text) {
     appendEventLine(text);
 }
 
-function showSummary(results, totalElapsedMs) {
+function showSummary(results, totalElapsedMs, discoveryUpToDateCount) {
     const updated = results.filter((result) => result.status === 'updated').length;
-    const upToDate = results.filter((result) => result.status === 'no-update').length;
+    const upToDate = (discoveryUpToDateCount || 0) + results.filter((result) => result.status === 'no-update').length;
     const skipped = results.filter((result) => result.status === 'skipped').length;
     const failed = results.filter((result) => result.status === 'failed').length;
 

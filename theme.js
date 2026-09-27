@@ -3,7 +3,7 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-const CYAN = '#00d7fe';
+const CYAN = '#0087ae';
 const GREEN = '#00d701';
 const RED = '#d70001';
 const YELLOW = '#d7af01';

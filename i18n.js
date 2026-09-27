@@ -16,7 +16,7 @@ const STRINGS = {
         sessionUpdating: (index, total) => `Session:  {bold}Upgrading ${index} of ${total}{/bold}`,
         sessionNoPackages: `Session:  {bold}No packages to upgrade{/bold}`,
         sessionCounts: (installed, upToDate, toUpdate, ignored) =>
-            `Installed: {#00d7fe-fg}${installed}{/#00d7fe-fg}   ` +
+            `Installed: {#0087ae-fg}${installed}{/#0087ae-fg}   ` +
             `Up to date: {#bcbcbd-fg}${upToDate}{/#bcbcbd-fg}   ` +
             `To update: {#00d701-fg}${toUpdate}{/#00d701-fg}   ` +
             `Ignored: {#d7af01-fg}${ignored}{/#d7af01-fg}`,
@@ -55,8 +55,8 @@ const STRINGS = {
         fatalError: (message) => `Fatal error: ${message}`,
         finalMessage: (seconds) =>
             seconds
-                ? `{#00d7fe-fg}Program will automatically exit in ${seconds}s, or press any key to exit immediately.{/#00d7fe-fg}`
-                : '{#00d7fe-fg}Press any key to exit.{/#00d7fe-fg}',
+                ? `{#0087ae-fg}Program will automatically exit in ${seconds}s, or press any key to exit immediately.{/#0087ae-fg}`
+                : '{#0087ae-fg}Press any key to exit.{/#0087ae-fg}',
         checkingForUpdates: 'Checking for updates...',
         checkingPackages: 'Checking installed packages...',
         updateCheckFailed: '{#d7af01-fg}Update check failed - continuing with the current version.{/#d7af01-fg}',
@@ -64,7 +64,7 @@ const STRINGS = {
         upToDateVersion: (version) => `{#00d701-fg}You're on the latest version (${version}).{/#00d701-fg}`,
         noInstallerAsset: (tag) => `{#d7af01-fg}Release ${tag} has no installer asset - skipping update.{/#d7af01-fg}`,
         updatingTo: (version, current) =>
-            `{bold}{#00d7fe-fg}Updating to version ${version} (current: ${current})...{/#00d7fe-fg}{/bold}`,
+            `{bold}{#0087ae-fg}Updating to version ${version} (current: ${current})...{/#0087ae-fg}{/bold}`,
         downloadingUpdate: 'Downloading update...',
         installingUpdate: 'Installing update and restarting...',
         updateFailed: '{#d7af01-fg}Update failed, continuing with the current version.{/#d7af01-fg}',
@@ -115,7 +115,7 @@ const STRINGS = {
         sessionUpdating: (index, total) => `Стан сесії:  {bold}Оновлення ${index} з ${total}{/bold}`,
         sessionNoPackages: `Стан сесії:  {bold}Немає пакетів для оновлення{/bold}`,
         sessionCounts: (installed, upToDate, toUpdate, ignored) =>
-            `Встановлено: {#00d7fe-fg}${installed}{/#00d7fe-fg}   ` +
+            `Встановлено: {#0087ae-fg}${installed}{/#0087ae-fg}   ` +
             `Актуально: {#bcbcbd-fg}${upToDate}{/#bcbcbd-fg}   ` +
             `До оновлення: {#00d701-fg}${toUpdate}{/#00d701-fg}   ` +
             `Ігнор: {#d7af01-fg}${ignored}{/#d7af01-fg}`,
@@ -154,8 +154,8 @@ const STRINGS = {
         fatalError: (message) => `Критична помилка: ${message}`,
         finalMessage: (seconds) =>
             seconds
-                ? `{#00d7fe-fg}Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.{/#00d7fe-fg}`
-                : '{#00d7fe-fg}Натисніть будь-яку клавішу, щоб вийти.{/#00d7fe-fg}',
+                ? `{#0087ae-fg}Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.{/#0087ae-fg}`
+                : '{#0087ae-fg}Натисніть будь-яку клавішу, щоб вийти.{/#0087ae-fg}',
         checkingForUpdates: 'Перевірка оновлень...',
         checkingPackages: 'Перевірка встановлених пакетів...',
         updateCheckFailed: '{#d7af01-fg}Перевірка оновлень не вдалась - продовжуємо з поточною версією.{/#d7af01-fg}',
@@ -163,7 +163,7 @@ const STRINGS = {
         upToDateVersion: (version) => `{#00d701-fg}У вас остання версія (${version}).{/#00d701-fg}`,
         noInstallerAsset: (tag) => `{#d7af01-fg}Реліз ${tag} не має файлу інсталятора - оновлення пропущено.{/#d7af01-fg}`,
         updatingTo: (version, current) =>
-            `{bold}{#00d7fe-fg}Оновлення до версії ${version} (поточна: ${current})...{/#00d7fe-fg}{/bold}`,
+            `{bold}{#0087ae-fg}Оновлення до версії ${version} (поточна: ${current})...{/#0087ae-fg}{/bold}`,
         downloadingUpdate: 'Завантаження оновлення...',
         installingUpdate: 'Встановлення оновлення й перезапуск...',
         updateFailed: '{#d7af01-fg}Оновлення не вдалось, продовжуємо з поточною версією.{/#d7af01-fg}',

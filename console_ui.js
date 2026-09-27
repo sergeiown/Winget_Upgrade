@@ -5,18 +5,19 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 const blessed = require('neo-blessed');
 const i18n = require('./i18n');
+const theme = require('./theme');
 
 const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 function statusMeta(status) {
     const t = i18n.get();
     const table = {
-        updated: { label: t.statusUpdated, tag: 'green-fg', icon: '✓' },
-        'no-update': { label: t.statusUpToDate, tag: 'white-fg', icon: '·' },
-        failed: { label: t.statusFailed, tag: 'red-fg', icon: '✗' },
-        skipped: { label: t.statusSkipped, tag: 'yellow-fg', icon: '»' },
+        updated: { label: t.statusUpdated, tag: theme.greenFg, icon: '✓' },
+        'no-update': { label: t.statusUpToDate, tag: theme.whiteFg, icon: '·' },
+        failed: { label: t.statusFailed, tag: theme.redFg, icon: '✗' },
+        skipped: { label: t.statusSkipped, tag: theme.yellowFg, icon: '»' },
     };
-    return table[status] || { label: status, tag: 'white-fg', icon: ' ' };
+    return table[status] || { label: status, tag: theme.whiteFg, icon: ' ' };
 }
 
 let screen = null;
@@ -171,7 +172,7 @@ function showSplash() {
             left: 'center',
             width: boxWidth,
             height: boxHeight,
-            style: { fg: 'cyan' },
+            style: { fg: theme.CYAN },
             content: '',
         });
 
@@ -233,7 +234,7 @@ function init(windowTitle, boxLabel) {
         width: '100%',
         tags: true,
         border: { type: 'line' },
-        style: { border: { fg: 'cyan' }, label: { fg: 'cyan', bold: true } },
+        style: { border: { fg: theme.CYAN }, label: { fg: theme.CYAN, bold: true } },
     };
 
     sessionBox = blessed.box(
@@ -253,7 +254,7 @@ function init(windowTitle, boxLabel) {
             label: t.operationLabel,
             scrollable: true,
             alwaysScroll: true,
-            scrollbar: { ch: ' ', style: { bg: 'cyan' } },
+            scrollbar: { ch: ' ', style: { bg: theme.CYAN } },
         })
     );
 
@@ -273,7 +274,7 @@ function init(windowTitle, boxLabel) {
             label: t.eventsLabel,
             scrollable: true,
             alwaysScroll: true,
-            scrollbar: { ch: ' ', style: { bg: 'cyan' } },
+            scrollbar: { ch: ' ', style: { bg: theme.CYAN } },
         })
     );
 
@@ -284,7 +285,7 @@ function init(windowTitle, boxLabel) {
         width: '100%',
         height: 1,
         tags: true,
-        style: { fg: 'black', bg: 'cyan' },
+        style: { fg: theme.BLACK, bg: theme.CYAN },
         content: t.footer,
     });
 
@@ -296,7 +297,7 @@ function init(windowTitle, boxLabel) {
         height: 6,
         tags: true,
         border: { type: 'line' },
-        style: { border: { fg: 'yellow' } },
+        style: { border: { fg: theme.YELLOW } },
     });
 
     i18n.onLocaleChange(applyLocaleToChrome);
@@ -431,7 +432,7 @@ function renderProgress() {
     const statusText = truncateWithEllipsis(progressStatusText, maxStatusLength);
 
     progressBox.setContent(
-        `{cyan-fg}${frame}{/cyan-fg} ${blessed.escape(statusText)} {white-fg}${timeSuffix}{/white-fg}`
+        `{${theme.cyanFg}}${frame}{/${theme.cyanFg}} ${blessed.escape(statusText)} {${theme.whiteFg}}${timeSuffix}{/${theme.whiteFg}}`
     );
     screen.render();
 }
@@ -500,7 +501,7 @@ function showFatalError(message) {
     const normalizedMessage = message.replace(/\r\n/g, '\n');
 
     operationBox.setLabel(i18n.get().errorLabel);
-    operationBox.setContent(`{red-fg}${blessed.escape(normalizedMessage)}{/red-fg}`);
+    operationBox.setContent(`{${theme.redFg}}${blessed.escape(normalizedMessage)}{/${theme.redFg}}`);
     screen.render();
 }
 

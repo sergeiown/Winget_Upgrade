@@ -14,6 +14,7 @@ const i18n = require('./i18n');
 const { listInstalledPackages, escapeForPowerShellSingleQuotes } = require('./utils');
 const wingetSettings = require('./winget_settings');
 const appSettings = require('./app_settings');
+const theme = require('./theme');
 
 const execAsync = promisify(exec);
 
@@ -83,8 +84,8 @@ function buildMenuList({ parent, screen, top, height }) {
         tags: true,
         keys: false,
         mouse: true,
-        scrollbar: { ch: ' ', style: { bg: 'cyan' } },
-        style: { selected: { fg: 'yellow' }, item: { fg: 'white' } },
+        scrollbar: { ch: ' ', style: { bg: theme.CYAN } },
+        style: { selected: { fg: theme.YELLOW }, item: { fg: theme.WHITE } },
         items: [],
     });
 
@@ -92,24 +93,24 @@ function buildMenuList({ parent, screen, top, height }) {
 
     function rowText(row) {
         if (row.warning) {
-            return `{red-fg}{bold}${row.getText()}{/bold}{/red-fg}`;
+            return `{${theme.redFg}}{bold}${row.getText()}{/bold}{/${theme.redFg}}`;
         }
         if (row.header) {
-            return `{cyan-fg}{bold}${row.getText()}{/bold}{/cyan-fg}`;
+            return `{${theme.cyanFg}}{bold}${row.getText()}{/bold}{/${theme.cyanFg}}`;
         }
         if (row.hint) {
-            return `{cyan-fg}${row.getText()}{/cyan-fg}`;
+            return `{${theme.cyanFg}}${row.getText()}{/${theme.cyanFg}}`;
         }
         if (row.type === 'checkbox') {
-            const mark = row.getChecked() ? '{green-fg}✓{/green-fg}' : '○';
+            const mark = row.getChecked() ? `{${theme.greenFg}}✓{/${theme.greenFg}}` : '○';
             return `${mark} ${row.label}`;
         }
         if (row.type === 'radio') {
-            const mark = row.getSelectedValue() === row.value ? '{cyan-fg}●{/cyan-fg}' : '○';
+            const mark = row.getSelectedValue() === row.value ? `{${theme.cyanFg}}●{/${theme.cyanFg}}` : '○';
             return `${mark} ${row.label}`;
         }
         if (row.type === 'number') {
-            return `{cyan-fg}▸{/cyan-fg} ${row.getDisplayText()}`;
+            return `{${theme.cyanFg}}▸{/${theme.cyanFg}} ${row.getDisplayText()}`;
         }
         return row.label || '';
     }
@@ -192,7 +193,7 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
         height: 11,
         tags: true,
         border: { type: 'line' },
-        style: { border: { fg: 'cyan' } },
+        style: { border: { fg: theme.CYAN } },
     });
 
     const numberPromptLabel = blessed.box({
@@ -212,7 +213,7 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
         height: 3,
         inputOnFocus: true,
         border: { type: 'line' },
-        style: { border: { fg: 'cyan' }, focus: { border: { fg: 'yellow' } } },
+        style: { border: { fg: theme.CYAN }, focus: { border: { fg: theme.YELLOW } } },
     });
 
     const numberPromptHint = blessed.box({
@@ -226,8 +227,8 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
 
     function promptForNumber(labelText, initialValue) {
         return new Promise((resolve) => {
-            numberPromptLabel.setContent(`{cyan-fg}${labelText}{/cyan-fg}`);
-            numberPromptHint.setContent(`{white-fg}${i18n.get().numberPromptHint}{/white-fg}`);
+            numberPromptLabel.setContent(`{${theme.cyanFg}}${labelText}{/${theme.cyanFg}}`);
+            numberPromptHint.setContent(`{${theme.whiteFg}}${i18n.get().numberPromptHint}{/${theme.whiteFg}}`);
             numberPromptInput.setValue(initialValue);
             numberPromptBox.show();
             screen.render();
@@ -314,7 +315,7 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
                     const tt = i18n.get();
                     const seconds = appSettings.getAutoCloseValue();
                     const valueText = seconds === 0 ? tt.autoCloseNeverValue : tt.autoCloseSecondsValue(seconds);
-                    return `${valueText}{white-fg}${tt.autoCloseChangeHint}{/white-fg}`;
+                    return `${valueText}{${theme.whiteFg}}${tt.autoCloseChangeHint}{/${theme.whiteFg}}`;
                 },
                 onActivate: promptAutoCloseSeconds,
             },
@@ -432,7 +433,7 @@ function buildIgnoreTab({ parent, screen, wingetLocation, ignoreFilePath }) {
         tags: true,
         border: { type: 'line' },
         label: t.searchLabel,
-        style: { border: { fg: 'cyan' }, label: { fg: 'cyan', bold: true } },
+        style: { border: { fg: theme.CYAN }, label: { fg: theme.CYAN, bold: true } },
         content: '',
     });
 
@@ -495,7 +496,11 @@ function buildIgnoreTab({ parent, screen, wingetLocation, ignoreFilePath }) {
         const tt = i18n.get();
         updateLabel();
         searchBox.setLabel(tt.searchLabel);
-        searchBox.setContent(filterText ? `{cyan-fg}{bold}${filterText}▏{/bold}{/cyan-fg}` : `{cyan-fg}${tt.searchPlaceholder}{/cyan-fg}`);
+        searchBox.setContent(
+            filterText
+                ? `{${theme.cyanFg}}{bold}${filterText}▏{/bold}{/${theme.cyanFg}}`
+                : `{${theme.cyanFg}}${tt.searchPlaceholder}{/${theme.cyanFg}}`
+        );
         setRows(buildRows());
     }
 
@@ -659,7 +664,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             left: 0,
             width: '100%',
             height: '100%',
-            style: { bg: 'black' },
+            style: { bg: theme.BLACK },
         });
 
         const header = blessed.box({
@@ -671,7 +676,7 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             tags: true,
             border: { type: 'line' },
             label: t.settingsTitle,
-            style: { border: { fg: 'cyan' }, label: { fg: 'cyan', bold: true } },
+            style: { border: { fg: theme.CYAN }, label: { fg: theme.CYAN, bold: true } },
             content: t.settingsCloseHint,
         });
 
@@ -685,9 +690,9 @@ async function open(screen, { wingetLocation, ignoreFilePath }) {
             mouse: true,
             autoCommandKeys: true,
             style: {
-                prefix: { fg: 'white', bold: true },
-                item: { fg: 'white' },
-                selected: { fg: 'black', bg: 'cyan', bold: true },
+                prefix: { fg: theme.WHITE, bold: true },
+                item: { fg: theme.WHITE },
+                selected: { fg: theme.BLACK, bg: theme.CYAN, bold: true },
             },
         });
 

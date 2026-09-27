@@ -108,6 +108,9 @@ function buildMenuList({ parent, screen, top, height }) {
             const mark = row.getSelectedValue() === row.value ? '{cyan-fg}●{/cyan-fg}' : '○';
             return `${mark} ${row.label}`;
         }
+        if (row.type === 'number') {
+            return `{cyan-fg}▸{/cyan-fg} ${row.getDisplayText()}`;
+        }
         return row.label || '';
     }
 
@@ -142,6 +145,9 @@ function buildMenuList({ parent, screen, top, height }) {
             row.onToggle(!row.getChecked());
         } else if (row.type === 'radio') {
             row.onSelect(row.value);
+        } else if (row.type === 'number') {
+            row.onActivate();
+            return;
         }
         render();
     }
@@ -176,6 +182,85 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
     let wingetAvailable = false;
     let userSettingsFilePath = null;
     let userSettingsValues = {};
+
+    const numberPromptBox = blessed.box({
+        parent: screen,
+        hidden: true,
+        top: 'center',
+        left: 'center',
+        width: 58,
+        height: 11,
+        tags: true,
+        border: { type: 'line' },
+        style: { border: { fg: 'cyan' } },
+    });
+
+    const numberPromptLabel = blessed.box({
+        parent: numberPromptBox,
+        top: 1,
+        left: 2,
+        width: '100%-4',
+        height: 2,
+        tags: true,
+    });
+
+    const numberPromptInput = blessed.textbox({
+        parent: numberPromptBox,
+        top: 4,
+        left: 2,
+        width: '100%-4',
+        height: 3,
+        inputOnFocus: true,
+        border: { type: 'line' },
+        style: { border: { fg: 'cyan' }, focus: { border: { fg: 'yellow' } } },
+    });
+
+    const numberPromptHint = blessed.box({
+        parent: numberPromptBox,
+        top: 8,
+        left: 2,
+        width: '100%-4',
+        height: 1,
+        tags: true,
+    });
+
+    function promptForNumber(labelText, initialValue) {
+        return new Promise((resolve) => {
+            numberPromptLabel.setContent(`{cyan-fg}${labelText}{/cyan-fg}`);
+            numberPromptHint.setContent(`{white-fg}${i18n.get().numberPromptHint}{/white-fg}`);
+            numberPromptInput.setValue(initialValue);
+            numberPromptBox.show();
+            screen.render();
+
+            numberPromptInput.readInput((err, value) => {
+                numberPromptBox.hide();
+                screen.render();
+                resolve(err || value == null ? null : value);
+            });
+        });
+    }
+
+    async function promptAutoCloseSeconds() {
+        async function ask(promptText, initialValue) {
+            const value = await promptForNumber(promptText, initialValue);
+            if (value == null) {
+                setRows(buildRows());
+                screen.render();
+                return;
+            }
+
+            const trimmed = value.trim();
+            if (appSettings.setAutoCloseSeconds(trimmed)) {
+                setRows(buildRows());
+                screen.render();
+                return;
+            }
+
+            await ask(i18n.get().autoCloseInvalidValue, trimmed);
+        }
+
+        await ask(i18n.get().autoClosePromptText, String(appSettings.getAutoCloseValue()));
+    }
 
     function saveUserSettings(mutateFn) {
         if (!userSettingsFilePath) {
@@ -224,28 +309,14 @@ function buildGeneralTab({ parent, screen, onLocaleChanged }) {
             blankRow(),
             { header: true, getText: () => i18n.get().autoCloseLabel },
             {
-                type: 'radio',
-                groupId: 'autoClose',
-                value: 'never',
-                label: t.autoCloseNever,
-                getSelectedValue: () => appSettings.getAutoClose(),
-                onSelect: (value) => appSettings.setAutoClose(value),
-            },
-            {
-                type: 'radio',
-                groupId: 'autoClose',
-                value: '30',
-                label: t.autoClose30,
-                getSelectedValue: () => appSettings.getAutoClose(),
-                onSelect: (value) => appSettings.setAutoClose(value),
-            },
-            {
-                type: 'radio',
-                groupId: 'autoClose',
-                value: '60',
-                label: t.autoClose60,
-                getSelectedValue: () => appSettings.getAutoClose(),
-                onSelect: (value) => appSettings.setAutoClose(value),
+                type: 'number',
+                getDisplayText: () => {
+                    const tt = i18n.get();
+                    const seconds = appSettings.getAutoCloseValue();
+                    const valueText = seconds === 0 ? tt.autoCloseNeverValue : tt.autoCloseSecondsValue(seconds);
+                    return `${valueText}{white-fg}${tt.autoCloseChangeHint}{/white-fg}`;
+                },
+                onActivate: promptAutoCloseSeconds,
             },
             blankRow(),
         ];

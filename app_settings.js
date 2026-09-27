@@ -7,43 +7,64 @@ const fs = require('fs');
 const os = require('os');
 const settings = require('./settings');
 
-const AUTO_CLOSE_VALUES = ['never', '30', '60'];
-const DEFAULT_AUTO_CLOSE = '30';
+const MIN_AUTO_CLOSE_SECONDS = 0;
+const MAX_AUTO_CLOSE_SECONDS = 180;
+const DEFAULT_AUTO_CLOSE_SECONDS = 10;
 
-function readSavedAutoClose() {
+function parseAutoCloseSeconds(value) {
+    if (!/^\d+$/.test(String(value).trim())) {
+        return null;
+    }
+    const parsed = Number(value);
+    return parsed >= MIN_AUTO_CLOSE_SECONDS && parsed <= MAX_AUTO_CLOSE_SECONDS ? parsed : null;
+}
+
+function readSavedAutoCloseSeconds() {
     try {
         const value = fs.readFileSync(settings.autoCloseFilePath, 'utf-8').trim();
-        return AUTO_CLOSE_VALUES.includes(value) ? value : null;
+        return parseAutoCloseSeconds(value);
     } catch (error) {
         return null;
     }
 }
 
-let currentAutoClose = readSavedAutoClose() || DEFAULT_AUTO_CLOSE;
+let currentAutoCloseSeconds = readSavedAutoCloseSeconds();
+if (currentAutoCloseSeconds === null) {
+    currentAutoCloseSeconds = DEFAULT_AUTO_CLOSE_SECONDS;
+}
 
-function getAutoClose() {
-    return currentAutoClose;
+function getAutoCloseValue() {
+    return currentAutoCloseSeconds;
 }
 
 function getAutoCloseSeconds() {
-    return currentAutoClose === 'never' ? null : Number(currentAutoClose);
+    return currentAutoCloseSeconds === 0 ? null : currentAutoCloseSeconds;
 }
 
-function setAutoClose(value) {
-    if (!AUTO_CLOSE_VALUES.includes(value) || value === currentAutoClose) {
-        return;
+function setAutoCloseSeconds(value) {
+    const parsed = parseAutoCloseSeconds(value);
+    if (parsed === null) {
+        return false;
     }
 
-    currentAutoClose = value;
+    if (parsed === currentAutoCloseSeconds) {
+        return true;
+    }
+
+    currentAutoCloseSeconds = parsed;
 
     try {
-        fs.writeFileSync(settings.autoCloseFilePath, value + os.EOL);
+        fs.writeFileSync(settings.autoCloseFilePath, String(parsed) + os.EOL);
     } catch (error) {}
+
+    return true;
 }
 
 module.exports = {
-    AUTO_CLOSE_VALUES,
-    getAutoClose,
+    MIN_AUTO_CLOSE_SECONDS,
+    MAX_AUTO_CLOSE_SECONDS,
+    DEFAULT_AUTO_CLOSE_SECONDS,
+    getAutoCloseValue,
     getAutoCloseSeconds,
-    setAutoClose,
+    setAutoCloseSeconds,
 };

@@ -6,6 +6,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] The console UI now uses fixed colors instead of the terminal's own named ANSI palette, so it looks the same regardless of the terminal's color scheme. **Note:** this does not affect the terminal window's own transparency/acrylic setting, which only the terminal itself controls.
 - [x] The auto-exit delay setting is now a free-form number of seconds (0-180, default 10) instead of a fixed 30/60 choice, renamed to "Force-close after finishing" - 0 means never auto-close.
 - [x] Fixed the final summary always showing "0" up-to-date packages regardless of the real count.
 - [x] Fixed the log and ignore-list files sometimes being written to the wrong (and inaccessible) system folder when launched at sign-in, and stray error text corrupting the console UI.

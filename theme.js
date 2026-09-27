@@ -3,12 +3,12 @@ https://github.com/sergeiown/Winget_Upgrade/blob/main/LICENSE */
 
 'use strict';
 
-const CYAN = '#00d7ff';
-const GREEN = '#00d700';
-const RED = '#d70000';
-const YELLOW = '#d7af00';
-const WHITE = '#bcbcbc';
-const BLACK = '#000000';
+const CYAN = '#00d7fe';
+const GREEN = '#00d701';
+const RED = '#d70001';
+const YELLOW = '#d7af01';
+const WHITE = '#bcbcbd';
+const BLACK = '#080809';
 
 module.exports = {
     CYAN,

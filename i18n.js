@@ -16,10 +16,10 @@ const STRINGS = {
         sessionUpdating: (index, total) => `Session:  {bold}Upgrading ${index} of ${total}{/bold}`,
         sessionNoPackages: `Session:  {bold}No packages to upgrade{/bold}`,
         sessionCounts: (installed, upToDate, toUpdate, ignored) =>
-            `Installed: {#00d7ff-fg}${installed}{/#00d7ff-fg}   ` +
-            `Up to date: {#bcbcbc-fg}${upToDate}{/#bcbcbc-fg}   ` +
-            `To update: {#00d700-fg}${toUpdate}{/#00d700-fg}   ` +
-            `Ignored: {#d7af00-fg}${ignored}{/#d7af00-fg}`,
+            `Installed: {#00d7fe-fg}${installed}{/#00d7fe-fg}   ` +
+            `Up to date: {#bcbcbd-fg}${upToDate}{/#bcbcbd-fg}   ` +
+            `To update: {#00d701-fg}${toUpdate}{/#00d701-fg}   ` +
+            `Ignored: {#d7af01-fg}${ignored}{/#d7af01-fg}`,
         operationLabel: ' Current operation ',
         progressLabel: ' Progress ',
         eventsLabel: ' Additionally: recent events ',
@@ -28,12 +28,12 @@ const STRINGS = {
         statusFailed: 'Failed',
         statusSkipped: 'Skipped',
         summaryLine: (updated, upToDate, skipped, failed, seconds) =>
-            `{bold}Summary:{/bold} Updated: {#00d700-fg}${updated}{/#00d700-fg}  Up to date: ${upToDate}  ` +
-            `Skipped: {#d7af00-fg}${skipped}{/#d7af00-fg}  Failed: {#d70000-fg}${failed}{/#d70000-fg}  Time: ${seconds}s`,
-        wingetInstalled: (version) => `{#00d700-fg}Winget ${version} is installed on the system.{/#00d700-fg}`,
-        noUpdatesFound: '{#00d700-fg}No updates found - everything is up to date.{/#00d700-fg}',
+            `{bold}Summary:{/bold} Updated: {#00d701-fg}${updated}{/#00d701-fg}  Up to date: ${upToDate}  ` +
+            `Skipped: {#d7af01-fg}${skipped}{/#d7af01-fg}  Failed: {#d70001-fg}${failed}{/#d70001-fg}  Time: ${seconds}s`,
+        wingetInstalled: (version) => `{#00d701-fg}Winget ${version} is installed on the system.{/#00d701-fg}`,
+        noUpdatesFound: '{#00d701-fg}No updates found - everything is up to date.{/#00d701-fg}',
         packagesToUpdate: (ids) => `{bold}Packages to update:{/bold} ${ids}`,
-        restartingSession: '{#d7af00-fg}Ignore list changed - restarting the session...{/#d7af00-fg}',
+        restartingSession: '{#d7af01-fg}Ignore list changed - restarting the session...{/#d7af01-fg}',
         wingetNotInstalled: 'Winget is not installed on this system.',
         notInstalledSolutions: `Possible solutions:
 1. Make sure that winget is installed on your system and that its location is
@@ -55,19 +55,19 @@ const STRINGS = {
         fatalError: (message) => `Fatal error: ${message}`,
         finalMessage: (seconds) =>
             seconds
-                ? `{#00d7ff-fg}Program will automatically exit in ${seconds}s, or press any key to exit immediately.{/#00d7ff-fg}`
-                : '{#00d7ff-fg}Press any key to exit.{/#00d7ff-fg}',
+                ? `{#00d7fe-fg}Program will automatically exit in ${seconds}s, or press any key to exit immediately.{/#00d7fe-fg}`
+                : '{#00d7fe-fg}Press any key to exit.{/#00d7fe-fg}',
         checkingForUpdates: 'Checking for updates...',
         checkingPackages: 'Checking installed packages...',
-        updateCheckFailed: '{#d7af00-fg}Update check failed - continuing with the current version.{/#d7af00-fg}',
-        updateCheckNoInfo: '{#d7af00-fg}Update check returned no usable release information.{/#d7af00-fg}',
-        upToDateVersion: (version) => `{#00d700-fg}You're on the latest version (${version}).{/#00d700-fg}`,
-        noInstallerAsset: (tag) => `{#d7af00-fg}Release ${tag} has no installer asset - skipping update.{/#d7af00-fg}`,
+        updateCheckFailed: '{#d7af01-fg}Update check failed - continuing with the current version.{/#d7af01-fg}',
+        updateCheckNoInfo: '{#d7af01-fg}Update check returned no usable release information.{/#d7af01-fg}',
+        upToDateVersion: (version) => `{#00d701-fg}You're on the latest version (${version}).{/#00d701-fg}`,
+        noInstallerAsset: (tag) => `{#d7af01-fg}Release ${tag} has no installer asset - skipping update.{/#d7af01-fg}`,
         updatingTo: (version, current) =>
-            `{bold}{#00d7ff-fg}Updating to version ${version} (current: ${current})...{/#00d7ff-fg}{/bold}`,
+            `{bold}{#00d7fe-fg}Updating to version ${version} (current: ${current})...{/#00d7fe-fg}{/bold}`,
         downloadingUpdate: 'Downloading update...',
         installingUpdate: 'Installing update and restarting...',
-        updateFailed: '{#d7af00-fg}Update failed, continuing with the current version.{/#d7af00-fg}',
+        updateFailed: '{#d7af01-fg}Update failed, continuing with the current version.{/#d7af01-fg}',
         settingsTitle: ' Settings ',
         settingsCloseHint:
             '{bold}Esc{/bold} - save and close    {bold}↑/↓{/bold} - navigate, {bold}Enter{/bold}/{bold}Space{/bold} - change    {bold}←/→{/bold} - switch tabs',
@@ -92,7 +92,7 @@ const STRINGS = {
         tabGeneral: 'General',
         tabIgnoreList: 'Ignore list',
         tabAdvanced: 'Advanced',
-        wingetSettingsUnavailable: '{#d7af00-fg}These settings require a newer version of winget.{/#d7af00-fg}',
+        wingetSettingsUnavailable: '{#d7af01-fg}These settings require a newer version of winget.{/#d7af01-fg}',
         scopeLabel: ' Install scope ',
         scopeUser: 'Current user',
         scopeMachine: 'Entire machine',
@@ -105,7 +105,7 @@ const STRINGS = {
         installerHashOverrideLabel: 'Continue install when the installer hash does not match',
         installerHashOverrideWarning: 'This bypasses integrity verification of the downloaded installer.',
         adminApplying: 'Requesting administrator privileges...',
-        adminChangeFailed: '{#d7af00-fg}The change was cancelled or failed.{/#d7af00-fg}',
+        adminChangeFailed: '{#d7af01-fg}The change was cancelled or failed.{/#d7af01-fg}',
     },
     uk: {
         footer: ' {bold}F2{/bold} Налаштування    {bold}F5{/bold} Пропустити пакет    {bold}Esc{/bold} Вихід ',
@@ -115,10 +115,10 @@ const STRINGS = {
         sessionUpdating: (index, total) => `Стан сесії:  {bold}Оновлення ${index} з ${total}{/bold}`,
         sessionNoPackages: `Стан сесії:  {bold}Немає пакетів для оновлення{/bold}`,
         sessionCounts: (installed, upToDate, toUpdate, ignored) =>
-            `Встановлено: {#00d7ff-fg}${installed}{/#00d7ff-fg}   ` +
-            `Актуально: {#bcbcbc-fg}${upToDate}{/#bcbcbc-fg}   ` +
-            `До оновлення: {#00d700-fg}${toUpdate}{/#00d700-fg}   ` +
-            `Ігнор: {#d7af00-fg}${ignored}{/#d7af00-fg}`,
+            `Встановлено: {#00d7fe-fg}${installed}{/#00d7fe-fg}   ` +
+            `Актуально: {#bcbcbd-fg}${upToDate}{/#bcbcbd-fg}   ` +
+            `До оновлення: {#00d701-fg}${toUpdate}{/#00d701-fg}   ` +
+            `Ігнор: {#d7af01-fg}${ignored}{/#d7af01-fg}`,
         operationLabel: ' Поточна операція ',
         progressLabel: ' Прогрес ',
         eventsLabel: ' Додатково: останні події ',
@@ -127,12 +127,12 @@ const STRINGS = {
         statusFailed: 'Помилка',
         statusSkipped: 'Пропущено',
         summaryLine: (updated, upToDate, skipped, failed, seconds) =>
-            `{bold}Підсумок:{/bold} Оновлено: {#00d700-fg}${updated}{/#00d700-fg}  Актуально: ${upToDate}  ` +
-            `Пропущено: {#d7af00-fg}${skipped}{/#d7af00-fg}  Помилки: {#d70000-fg}${failed}{/#d70000-fg}  Час: ${seconds}с`,
-        wingetInstalled: (version) => `{#00d700-fg}Winget ${version} встановлено в системі.{/#00d700-fg}`,
-        noUpdatesFound: '{#00d700-fg}Оновлень не знайдено - все актуально.{/#00d700-fg}',
+            `{bold}Підсумок:{/bold} Оновлено: {#00d701-fg}${updated}{/#00d701-fg}  Актуально: ${upToDate}  ` +
+            `Пропущено: {#d7af01-fg}${skipped}{/#d7af01-fg}  Помилки: {#d70001-fg}${failed}{/#d70001-fg}  Час: ${seconds}с`,
+        wingetInstalled: (version) => `{#00d701-fg}Winget ${version} встановлено в системі.{/#00d701-fg}`,
+        noUpdatesFound: '{#00d701-fg}Оновлень не знайдено - все актуально.{/#00d701-fg}',
         packagesToUpdate: (ids) => `{bold}Пакети для оновлення:{/bold} ${ids}`,
-        restartingSession: '{#d7af00-fg}Список ігнорування змінено - перезапуск сесії...{/#d7af00-fg}',
+        restartingSession: '{#d7af01-fg}Список ігнорування змінено - перезапуск сесії...{/#d7af01-fg}',
         wingetNotInstalled: 'Winget не встановлено в цій системі.',
         notInstalledSolutions: `Можливі рішення:
 1. Переконайтеся, що winget встановлено у вашій системі і його розташування
@@ -154,19 +154,19 @@ const STRINGS = {
         fatalError: (message) => `Критична помилка: ${message}`,
         finalMessage: (seconds) =>
             seconds
-                ? `{#00d7ff-fg}Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.{/#00d7ff-fg}`
-                : '{#00d7ff-fg}Натисніть будь-яку клавішу, щоб вийти.{/#00d7ff-fg}',
+                ? `{#00d7fe-fg}Програма автоматично завершиться через ${seconds} секунд, або натисніть будь-яку клавішу для негайного виходу.{/#00d7fe-fg}`
+                : '{#00d7fe-fg}Натисніть будь-яку клавішу, щоб вийти.{/#00d7fe-fg}',
         checkingForUpdates: 'Перевірка оновлень...',
         checkingPackages: 'Перевірка встановлених пакетів...',
-        updateCheckFailed: '{#d7af00-fg}Перевірка оновлень не вдалась - продовжуємо з поточною версією.{/#d7af00-fg}',
-        updateCheckNoInfo: '{#d7af00-fg}Перевірка оновлень не повернула придатної інформації.{/#d7af00-fg}',
-        upToDateVersion: (version) => `{#00d700-fg}У вас остання версія (${version}).{/#00d700-fg}`,
-        noInstallerAsset: (tag) => `{#d7af00-fg}Реліз ${tag} не має файлу інсталятора - оновлення пропущено.{/#d7af00-fg}`,
+        updateCheckFailed: '{#d7af01-fg}Перевірка оновлень не вдалась - продовжуємо з поточною версією.{/#d7af01-fg}',
+        updateCheckNoInfo: '{#d7af01-fg}Перевірка оновлень не повернула придатної інформації.{/#d7af01-fg}',
+        upToDateVersion: (version) => `{#00d701-fg}У вас остання версія (${version}).{/#00d701-fg}`,
+        noInstallerAsset: (tag) => `{#d7af01-fg}Реліз ${tag} не має файлу інсталятора - оновлення пропущено.{/#d7af01-fg}`,
         updatingTo: (version, current) =>
-            `{bold}{#00d7ff-fg}Оновлення до версії ${version} (поточна: ${current})...{/#00d7ff-fg}{/bold}`,
+            `{bold}{#00d7fe-fg}Оновлення до версії ${version} (поточна: ${current})...{/#00d7fe-fg}{/bold}`,
         downloadingUpdate: 'Завантаження оновлення...',
         installingUpdate: 'Встановлення оновлення й перезапуск...',
-        updateFailed: '{#d7af00-fg}Оновлення не вдалось, продовжуємо з поточною версією.{/#d7af00-fg}',
+        updateFailed: '{#d7af01-fg}Оновлення не вдалось, продовжуємо з поточною версією.{/#d7af01-fg}',
         settingsTitle: ' Налаштування ',
         settingsCloseHint:
             '{bold}Esc{/bold} - зберегти й закрити    {bold}↑/↓{/bold} - навігація, {bold}Enter{/bold}/{bold}Space{/bold} - зміна    {bold}←/→{/bold} - вкладки',
@@ -191,7 +191,7 @@ const STRINGS = {
         tabGeneral: 'Загальні',
         tabIgnoreList: 'Ігнор-лист',
         tabAdvanced: 'Розширені',
-        wingetSettingsUnavailable: '{#d7af00-fg}Ці налаштування потребують новішої версії winget.{/#d7af00-fg}',
+        wingetSettingsUnavailable: '{#d7af01-fg}Ці налаштування потребують новішої версії winget.{/#d7af01-fg}',
         scopeLabel: ' Область встановлення ',
         scopeUser: 'Поточний користувач',
         scopeMachine: 'Уся машина',
@@ -204,7 +204,7 @@ const STRINGS = {
         installerHashOverrideLabel: 'Продовжувати встановлення при розбіжності хешу інсталятора',
         installerHashOverrideWarning: 'Це обходить перевірку цілісності завантаженого інсталятора.',
         adminApplying: 'Запит прав адміністратора...',
-        adminChangeFailed: '{#d7af00-fg}Зміну скасовано або не вдалося застосувати.{/#d7af00-fg}',
+        adminChangeFailed: '{#d7af01-fg}Зміну скасовано або не вдалося застосувати.{/#d7af01-fg}',
     },
 };
 

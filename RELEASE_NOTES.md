@@ -6,6 +6,8 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] When a package fails for lack of administrator rights, the app now offers to retry it as administrator (UAC prompt).
+- [x] The "recent events" panel now wraps long lines (like the full list of packages to update) and can be scrolled with the mouse wheel, Up/Down and PgUp/PgDn.
 - [x] Redesigned the app icon's settings-gear badge as a proper engraved seal, matching the archer illustration's style.
 - [x] The console UI now uses fixed colors instead of the terminal's own named ANSI palette, so it looks the same regardless of the terminal's color scheme. **Note:** this does not affect the terminal window's own transparency/acrylic setting, which only the terminal itself controls.
 - [x] The auto-exit delay setting is now a free-form number of seconds (0-180, default 10) instead of a fixed 30/60 choice, renamed to "Force-close after finishing" - 0 means never auto-close.

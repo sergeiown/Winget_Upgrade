@@ -255,12 +255,40 @@ function classifyExitCode(code) {
     return 'failed';
 }
 
+const ELEVATION_PATTERN = /administrator|elevat|privilege|\b740\b|0x800702e4|access is denied/i;
+
+function upgradePackageElevated(wingetLocation, pkg) {
+    const startedAt = Date.now();
+    const args = settings.wingetArgs.upgrade
+        .concat(['--id', pkg.id, '--source', pkg.source])
+        .map((arg) => `'${escapeForPowerShellSingleQuotes(arg)}'`)
+        .join(',');
+    const script =
+        `$p = Start-Process -FilePath '${escapeForPowerShellSingleQuotes(wingetLocation)}' -ArgumentList @(${args}) ` +
+        `-Verb RunAs -Wait -PassThru -WindowStyle Hidden; exit $p.ExitCode`;
+
+    return new Promise((resolve) => {
+        exec(`powershell -NoProfile -NonInteractive -Command "${script.replace(/"/g, '\\"')}"`, {
+            timeout: settings.packageUpgradeTimeoutMs,
+        }).on('exit', (code) => {
+            resolve({
+                id: pkg.id,
+                source: pkg.source,
+                status: classifyExitCode(code),
+                needsElevation: false,
+                durationMs: Date.now() - startedAt,
+            });
+        });
+    });
+}
+
 function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     const command = `"${wingetLocation}" ${settings.wingetArgs.upgrade.join(' ')} --id "${pkg.id}" --source "${pkg.source}"`;
     const startedAt = Date.now();
     const logStream = createWriteStream(logFilePath, { flags: 'a' });
     const childProcess = exec(command, { timeout: settings.packageUpgradeTimeoutMs });
     let skipped = false;
+    let output = '';
 
     childProcess.stdin.on('error', () => {});
     childProcess.stdin.write(`y${os.EOL}y${os.EOL}`);
@@ -268,6 +296,7 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
 
     childProcess.stdout.on('data', (data) => {
         const text = data.toString();
+        output += text;
 
         text.split(os.EOL).forEach((line) => {
             const trimmedLine = line.trim();
@@ -281,13 +310,19 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     });
 
     childProcess.stderr.pipe(logStream);
+    childProcess.stderr.on('data', (data) => {
+        output += data.toString();
+    });
 
     const promise = new Promise((resolve) => {
         childProcess.on('exit', (code) => {
             logStream.end();
+            const status = skipped ? 'skipped' : classifyExitCode(code);
             resolve({
                 id: pkg.id,
-                status: skipped ? 'skipped' : classifyExitCode(code),
+                source: pkg.source,
+                status,
+                needsElevation: status === 'failed' && ELEVATION_PATTERN.test(output),
                 durationMs: Date.now() - startedAt,
             });
         });
@@ -328,5 +363,6 @@ module.exports = {
     discoverUpgradablePackages,
     listInstalledPackages,
     upgradePackage,
+    upgradePackageElevated,
     escapeForPowerShellSingleQuotes,
 };

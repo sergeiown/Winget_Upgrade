@@ -34,6 +34,9 @@ const STRINGS = {
         noUpdatesFound: '{#00d701-fg}No updates found - everything is up to date.{/#00d701-fg}',
         packagesToUpdate: (ids) => `{bold}Packages to update:{/bold} ${ids}`,
         restartingSession: '{#d7af01-fg}Ignore list changed - restarting the session...{/#d7af01-fg}',
+        elevationPrompt: (ids) =>
+            `Not enough privileges to install: ${ids}. Retry as administrator? (a Windows UAC prompt will appear)`,
+        elevationRetrying: (id) => `{#d7af01-fg}Retrying ${id} as administrator...{/#d7af01-fg}`,
         wingetNotInstalled: 'Winget is not installed on this system.',
         notInstalledSolutions: `Possible solutions:
 1. Make sure that winget is installed on your system and that its location is
@@ -133,6 +136,9 @@ const STRINGS = {
         noUpdatesFound: '{#00d701-fg}Оновлень не знайдено - все актуально.{/#00d701-fg}',
         packagesToUpdate: (ids) => `{bold}Пакети для оновлення:{/bold} ${ids}`,
         restartingSession: '{#d7af01-fg}Список ігнорування змінено - перезапуск сесії...{/#d7af01-fg}',
+        elevationPrompt: (ids) =>
+            `Недостатньо прав для встановлення: ${ids}. Повторити від імені адміністратора? (з'явиться запит UAC)`,
+        elevationRetrying: (id) => `{#d7af01-fg}Повторна спроба ${id} від імені адміністратора...{/#d7af01-fg}`,
         wingetNotInstalled: 'Winget не встановлено в цій системі.',
         notInstalledSolutions: `Можливі рішення:
 1. Переконайтеся, що winget встановлено у вашій системі і його розташування

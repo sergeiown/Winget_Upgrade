@@ -43,6 +43,7 @@ let operationLines = [];
 let eventLines = [];
 
 const OPERATION_BOX_HEIGHT = 10;
+const EVENT_HISTORY_LIMIT = 500;
 
 function applyLocaleToChrome() {
     const t = i18n.get();
@@ -274,6 +275,7 @@ function init(windowTitle, boxLabel) {
             label: t.eventsLabel,
             scrollable: true,
             alwaysScroll: true,
+            mouse: true,
             scrollbar: { ch: ' ', style: { bg: theme.CYAN } },
         })
     );
@@ -313,6 +315,15 @@ function init(windowTitle, boxLabel) {
         }
     });
 
+    screen.key(['pageup', 'pagedown', 'up', 'down'], (ch, key) => {
+        if (modalOpen) {
+            return;
+        }
+        const step = key.name.startsWith('page') ? Math.max(1, eventsLog.height - 3) : 1;
+        eventsLog.scroll(key.name === 'pageup' || key.name === 'up' ? -step : step);
+        screen.render();
+    });
+
     screen.key(['f2'], () => {
         if (!modalOpen && settingsHandler) {
             settingsHandler();
@@ -346,6 +357,16 @@ function requestExit() {
         if (confirmed) {
             exitApp(0);
         }
+    });
+}
+
+function confirmAction(text) {
+    return new Promise((resolve) => {
+        modalOpen = true;
+        exitQuestion.ask(text, (error, confirmed) => {
+            modalOpen = false;
+            resolve(!!confirmed);
+        });
     });
 }
 
@@ -386,14 +407,6 @@ function truncateWithEllipsis(text, maxLength) {
         return text;
     }
     return `${text.slice(0, maxLength - 1)}…`;
-}
-
-function truncateTaggedLine(text, maxLength) {
-    const plain = text.replace(/\{[^}]*\}/g, '');
-    if (maxLength <= 1 || plain.length <= maxLength) {
-        return text;
-    }
-    return `${plain.slice(0, maxLength - 1)}…`;
 }
 
 function setCurrentOperation(pkg) {
@@ -464,13 +477,10 @@ function setCountdownDisplay(text) {
 }
 
 function appendEventLine(text) {
-    const resolvedHeight = typeof eventsLog.height === 'number' ? eventsLog.height : 20;
-    const visibleRows = Math.max(1, resolvedHeight - 2);
-    const maxLineLength = Math.max(10, screen.width - 4);
-
-    eventLines.push(truncateTaggedLine(text, maxLineLength));
-    eventLines = eventLines.slice(-visibleRows);
+    eventLines.push(text);
+    eventLines = eventLines.slice(-EVENT_HISTORY_LIMIT);
     eventsLog.setContent(eventLines.join('\n'));
+    eventsLog.setScrollPerc(100);
     screen.render();
 }
 
@@ -650,4 +660,5 @@ module.exports = {
     waitAnyKeyOrTimeout,
     waitForAutoExit,
     exitApp,
+    confirmAction,
 };

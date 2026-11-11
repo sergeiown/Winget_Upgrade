@@ -13,7 +13,7 @@ process.on('warning', (warning) => {
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgradePackage } = require('./utils');
+const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgradePackage, upgradePackageElevated } = require('./utils');
 const settings = require('./settings');
 const appSettings = require('./app_settings');
 const consoleUi = require('./console_ui');
@@ -112,6 +112,23 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
     }
 
     consoleUi.setUpgradeInProgress(false);
+
+    const elevationCandidates = restartRequested ? [] : results.filter((result) => result.needsElevation);
+    if (elevationCandidates.length > 0) {
+        const ids = elevationCandidates.map((result) => result.id).join(', ');
+        const confirmed = await consoleUi.confirmAction(i18n.get().elevationPrompt(ids));
+
+        if (confirmed) {
+            for (const candidate of elevationCandidates) {
+                consoleUi.appendInfoEvent(i18n.get().elevationRetrying(candidate.id));
+                consoleUi.startProgress(candidate.id);
+                const retried = await upgradePackageElevated(wingetLocation, candidate);
+                consoleUi.stopProgress();
+                consoleUi.appendResultEvent(retried);
+                results[results.indexOf(candidate)] = retried;
+            }
+        }
+    }
 
     return { results, totalElapsedMs: Date.now() - overallStartedAt };
 }

@@ -6,6 +6,7 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] The update download now shows progress (MB received) and gives up after 30 seconds without data, instead of looking frozen on slow connections.
 - [x] When a package fails for lack of administrator rights, the app now offers to retry it as administrator (UAC prompt).
 - [x] The "recent events" panel now wraps long lines (like the full list of packages to update) and can be scrolled with the mouse wheel, Up/Down and PgUp/PgDn.
 - [x] Redesigned the app icon's settings-gear badge as a proper engraved seal, matching the archer illustration's style.

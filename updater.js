@@ -14,6 +14,7 @@ const i18n = require('./i18n');
 const { logMessage } = require('./utils');
 
 const CHECK_TIMEOUT_MS = 8000;
+const DOWNLOAD_STALL_TIMEOUT_MS = 30000;
 
 function isRunningInstalled() {
     const installDir = path.dirname(process.execPath);
@@ -65,14 +66,45 @@ async function fetchLatestRelease() {
 }
 
 async function downloadAsset(url, destinationPath) {
-    const response = await fetch(url, { headers: { Accept: 'application/octet-stream' } });
+    const controller = new AbortController();
+    let stallTimer = null;
+    const armStallTimer = () => {
+        clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => controller.abort(), DOWNLOAD_STALL_TIMEOUT_MS);
+    };
 
-    if (!response.ok) {
-        throw new Error(`Failed to download update: HTTP ${response.status}`);
+    armStallTimer();
+
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: { Accept: 'application/octet-stream' },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to download update: HTTP ${response.status}`);
+        }
+
+        const total = Number(response.headers.get('content-length')) || 0;
+        const chunks = [];
+        let received = 0;
+
+        consoleUi.startProgress(i18n.get().downloadingUpdate);
+
+        for await (const chunk of response.body) {
+            armStallTimer();
+            chunks.push(chunk);
+            received += chunk.length;
+            const receivedMb = (received / 1048576).toFixed(1);
+            const label = total ? `${receivedMb} / ${(total / 1048576).toFixed(1)} MB` : `${receivedMb} MB`;
+            consoleUi.updateProgressStatus(`${i18n.get().downloadingUpdate} ${label}`);
+        }
+
+        await fsp.writeFile(destinationPath, Buffer.concat(chunks));
+    } finally {
+        clearTimeout(stallTimer);
+        consoleUi.stopProgress();
     }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    await fsp.writeFile(destinationPath, buffer);
 }
 
 async function installAndExit(installerPath) {

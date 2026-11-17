@@ -13,7 +13,7 @@ process.on('warning', (warning) => {
 const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgradePackage, upgradePackageElevated } = require('./utils');
+const { delay, logMessage, checkAndTrimLogFile, discoverUpgradablePackages, upgradePackage, upgradePackageElevated, addToIgnoreList } = require('./utils');
 const settings = require('./settings');
 const appSettings = require('./app_settings');
 const consoleUi = require('./console_ui');
@@ -127,6 +127,18 @@ async function runUpgrades(wingetLocation, packages, discoveryMeta) {
                 consoleUi.appendResultEvent(retried);
                 results[results.indexOf(candidate)] = retried;
             }
+        }
+    }
+
+    const unmatched = restartRequested ? [] : results.filter((result) => result.unmatched);
+    if (unmatched.length > 0) {
+        const ids = unmatched.map((result) => result.id);
+        const confirmed = await consoleUi.confirmAction(i18n.get().unmatchedPrompt(ids.join(', ')));
+
+        if (confirmed) {
+            await addToIgnoreList(settings.ignoreFilePath, ids);
+            await logMessage(`Added to the ignore list (not matched by winget): ${ids.join(', ')}${os.EOL}`);
+            consoleUi.appendInfoEvent(i18n.get().unmatchedAdded(ids.join(', ')));
         }
     }
 

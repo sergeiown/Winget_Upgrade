@@ -26,7 +26,6 @@ let operationBox = null;
 let progressBox = null;
 let eventsLog = null;
 let footerBox = null;
-let exitQuestion = null;
 
 let progressTimer = null;
 let progressStartedAt = 0;
@@ -291,17 +290,6 @@ function init(windowTitle, boxLabel) {
         content: t.footer,
     });
 
-    exitQuestion = blessed.question({
-        parent: screen,
-        top: 'center',
-        left: 'center',
-        width: '60%',
-        height: 6,
-        tags: true,
-        border: { type: 'line' },
-        style: { border: { fg: theme.YELLOW } },
-    });
-
     i18n.onLocaleChange(applyLocaleToChrome);
 
     screen.on('resize', () => {
@@ -353,7 +341,7 @@ function requestExit() {
         return;
     }
 
-    exitQuestion.ask(i18n.get().exitConfirm, (error, confirmed) => {
+    confirmAction(i18n.get().exitConfirm).then((confirmed) => {
         if (confirmed) {
             exitApp(0);
         }
@@ -362,11 +350,102 @@ function requestExit() {
 
 function confirmAction(text) {
     return new Promise((resolve) => {
-        modalOpen = true;
-        exitQuestion.ask(text, (error, confirmed) => {
-            modalOpen = false;
-            resolve(!!confirmed);
+        const width = Math.max(40, Math.floor(screen.width * 0.7));
+        const textWidth = width - 8;
+        const lines = text.split(' ').reduce(
+            (acc, word) => {
+                const last = acc[acc.length - 1];
+                if (last.length + word.length + 1 <= textWidth) {
+                    acc[acc.length - 1] = last ? `${last} ${word}` : word;
+                } else {
+                    acc.push(word);
+                }
+                return acc;
+            },
+            ['']
+        );
+
+        const box = blessed.box({
+            parent: screen,
+            top: 'center',
+            left: 'center',
+            width,
+            height: lines.length + 5,
+            tags: true,
+            border: { type: 'line' },
+            style: { border: { fg: theme.YELLOW } },
         });
+        blessed.box({
+            parent: box,
+            top: 1,
+            left: 2,
+            width: '100%-6',
+            height: lines.length,
+            tags: true,
+            content: lines.join('\n'),
+        });
+        const buttons = [
+            { answer: true, left: 2 },
+            { answer: false, left: 14 },
+        ].map((definition) =>
+            blessed.box({
+                parent: box,
+                top: lines.length + 2,
+                left: definition.left,
+                width: 10,
+                height: 1,
+                tags: true,
+                mouse: true,
+                align: 'center',
+            })
+        );
+
+        let selected = 0;
+        let finished = false;
+
+        const renderButtons = () => {
+            const t = i18n.get();
+            const labels = [t.confirmYes, t.confirmNo];
+            buttons.forEach((button, index) => {
+                button.setContent(labels[index]);
+                button.style = index === selected ? { fg: theme.WHITE, bg: theme.CYAN, bold: true } : { fg: theme.WHITE };
+            });
+            screen.render();
+        };
+
+        const finish = (answer) => {
+            if (finished) {
+                return;
+            }
+            finished = true;
+            screen.removeListener('keypress', onKey);
+            box.destroy();
+            modalOpen = false;
+            screen.render();
+            resolve(answer);
+        };
+
+        const onKey = (ch, key) => {
+            const name = key && key.name;
+            if (name === 'enter') {
+                finish(selected === 0);
+            } else if (name === 'y') {
+                finish(true);
+            } else if (name === 'n' || name === 'escape') {
+                finish(false);
+            } else if (['left', 'right', 'up', 'down', 'tab'].includes(name)) {
+                selected = 1 - selected;
+                renderButtons();
+            }
+        };
+
+        buttons.forEach((button, index) => {
+            button.on('click', () => finish(index === 0));
+        });
+
+        modalOpen = true;
+        renderButtons();
+        screen.on('keypress', onKey);
     });
 }
 

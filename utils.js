@@ -257,6 +257,14 @@ function classifyExitCode(code) {
 
 const ELEVATION_PATTERN = /administrator|elevat|privilege|\b740\b|0x800702e4|access is denied/i;
 
+const UNMATCHED_PATTERN = /No installed package found matching input criteria/i;
+
+async function addToIgnoreList(ignoreFilePath, ids) {
+    const existing = await fs.readFile(ignoreFilePath, 'utf-8').catch(() => '');
+    const separator = existing.length === 0 || existing.endsWith('\n') ? '' : os.EOL;
+    await fs.appendFile(ignoreFilePath, separator + ids.join(os.EOL) + os.EOL);
+}
+
 function upgradePackageElevated(wingetLocation, pkg) {
     const startedAt = Date.now();
     const args = settings.wingetArgs.upgrade
@@ -290,6 +298,8 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
     let skipped = false;
     let output = '';
 
+    logStream.write(`Upgrading ${pkg.id} [${pkg.source}]${os.EOL}`);
+
     childProcess.stdin.on('error', () => {});
     childProcess.stdin.write(`y${os.EOL}y${os.EOL}`);
     childProcess.stdin.end();
@@ -316,12 +326,13 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
 
     const promise = new Promise((resolve) => {
         childProcess.on('exit', (code) => {
-            logStream.end();
             const status = skipped ? 'skipped' : classifyExitCode(code);
+            logStream.end(`Result: ${pkg.id} - ${status} (exit code ${code})${os.EOL}`);
             resolve({
                 id: pkg.id,
                 source: pkg.source,
                 status,
+                unmatched: status === 'failed' && UNMATCHED_PATTERN.test(output),
                 needsElevation: status === 'failed' && ELEVATION_PATTERN.test(output),
                 durationMs: Date.now() - startedAt,
             });
@@ -364,5 +375,6 @@ module.exports = {
     listInstalledPackages,
     upgradePackage,
     upgradePackageElevated,
+    addToIgnoreList,
     escapeForPowerShellSingleQuotes,
 };

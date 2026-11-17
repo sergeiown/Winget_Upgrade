@@ -6,6 +6,9 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Confirmation dialogs now have Yes/No buttons, controllable with arrows, Tab, Enter, Y/N, Esc or the mouse.
+- [x] Packages that winget lists as upgradable but cannot match to an installed package (and so fail every run) can now be added to the ignore list from a prompt.
+- [x] Every package upgrade and its result are now written to the log.
 - [x] The update download now shows progress (MB received) and gives up after 30 seconds without data, instead of looking frozen on slow connections.
 - [x] When a package fails for lack of administrator rights, the app now offers to retry it as administrator (UAC prompt).
 - [x] The "recent events" panel now wraps long lines (like the full list of packages to update) and can be scrolled with the mouse wheel, Up/Down and PgUp/PgDn.

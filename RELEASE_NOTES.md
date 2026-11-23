@@ -6,6 +6,8 @@
 | :--- | :---: |
 
 ### Recent Changes
+- [x] Fixed the blurry app icon: the exe now embeds the sharp 256 px frame, the icon has every Windows size with a bolder small-size design, and Start menu shortcuts use the full icon.
+- [x] Packages that fail with winget's "Failed to install portable package" error can now be added to the ignore list from the same prompt.
 - [x] Confirmation dialogs now have Yes/No buttons, controllable with arrows, Tab, Enter, Y/N, Esc or the mouse.
 - [x] Packages that winget lists as upgradable but cannot match to an installed package (and so fail every run) can now be added to the ignore list from a prompt.
 - [x] Every package upgrade and its result are now written to the log.

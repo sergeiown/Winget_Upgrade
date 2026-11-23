@@ -28,7 +28,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 SetupIconFile={#MyAppIcon}
-UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayIcon={app}\sagittarius_1x1.ico
 SignTool=mysign
 
 [Languages]
@@ -46,15 +46,16 @@ Name: "autostart"; Description: "{cm:AutoStartTaskDescription}"; GroupDescriptio
 
 [Files]
 Source: "..\winget_upgrade.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAppIcon}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\winget_ignore.txt"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
 Source: "..\winget_upgrade.log"; DestDir: "{app}"; Flags: onlyifdoesntexist
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\sagittarius_1x1.ico"
 Name: "{group}\Ignore list"; Filename: "{app}\winget_ignore.txt"; WorkingDir: "{app}"
 Name: "{group}\Log file"; Filename: "{app}\winget_upgrade.log"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: autostart
+Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\sagittarius_1x1.ico"; Tasks: autostart
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; WorkingDir: "{app}"; Flags: nowait postinstall

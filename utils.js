@@ -258,6 +258,7 @@ function classifyExitCode(code) {
 const ELEVATION_PATTERN = /administrator|elevat|privilege|\b740\b|0x800702e4|access is denied/i;
 
 const UNMATCHED_PATTERN = /No installed package found matching input criteria/i;
+const PORTABLE_FAILURE_PATTERN = /Failed to install portable package|0x8a150052/i;
 
 async function addToIgnoreList(ignoreFilePath, ids) {
     const existing = await fs.readFile(ignoreFilePath, 'utf-8').catch(() => '');
@@ -332,7 +333,7 @@ function upgradePackage(wingetLocation, pkg, logFilePath, onProgress) {
                 id: pkg.id,
                 source: pkg.source,
                 status,
-                unmatched: status === 'failed' && UNMATCHED_PATTERN.test(output),
+                unmatched: status === 'failed' && (UNMATCHED_PATTERN.test(output) || PORTABLE_FAILURE_PATTERN.test(output)),
                 needsElevation: status === 'failed' && ELEVATION_PATTERN.test(output),
                 durationMs: Date.now() - startedAt,
             });

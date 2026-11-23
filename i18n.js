@@ -38,7 +38,7 @@ const STRINGS = {
             `Not enough privileges to install: ${ids}. Retry as administrator? (a Windows UAC prompt will appear)`,
         elevationRetrying: (id) => `{#d7af01-fg}Retrying ${id} as administrator...{/#d7af01-fg}`,
         unmatchedPrompt: (ids) =>
-            `winget lists an update for ${ids} but cannot match it to an installed package, so it will fail every time. Add it to the ignore list?`,
+            `winget cannot update ${ids} (it cannot match the installed package or fails to install it as a portable package). The app cannot fix this, so it will fail on every run. Add it to the ignore list?`,
         confirmYes: 'Yes',
         confirmNo: 'No',
         unmatchedAdded: (ids) => `{#d7af01-fg}Added to the ignore list: ${ids}{/#d7af01-fg}`,
@@ -145,7 +145,7 @@ const STRINGS = {
             `Недостатньо прав для встановлення: ${ids}. Повторити від імені адміністратора? (з'явиться запит UAC)`,
         elevationRetrying: (id) => `{#d7af01-fg}Повторна спроба ${id} від імені адміністратора...{/#d7af01-fg}`,
         unmatchedPrompt: (ids) =>
-            `winget показує оновлення для ${ids}, але не може зіставити його зі встановленим пакетом, тому воно щоразу завершується помилкою. Додати до ігнор-листа?`,
+            `winget не може оновити ${ids} (не зіставляє встановлений пакет або не вдається встановити portable-пакет). Застосунок цього виправити не може, тому помилка повторюватиметься щоразу. Додати до ігнор-листа?`,
         confirmYes: 'Так',
         confirmNo: 'Ні',
         unmatchedAdded: (ids) => `{#d7af01-fg}Додано до ігнор-листа: ${ids}{/#d7af01-fg}`,
